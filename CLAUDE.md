@@ -4,8 +4,8 @@ Global rules: ../CLAUDE.md
 
 Package-level notes. The global rules are not repeated here — read them first, then this file.
 Keep this file current: it is the context for every task in this package. The detailed plan is
-[docs/design.md](docs/design.md); status: **steps 1-3 of 5 done** (sealed versions, decisions, evidence files, audit log and
-retention), ADR-0010.
+[docs/design.md](docs/design.md); status: **steps 1-4 of 5 done** (sealed versions, decisions, evidence files, audit log and
+retention, public decision pages), ADR-0010.
 
 ## Purpose
 
@@ -44,15 +44,18 @@ Everything listed here follows semver; everything else in `src/` is `@internal`.
   (`storeEvidence()`, `evidenceContents()`), `Models\AuditEntry`.
 - `Facades\Decisions::record()`, `Data\DecisionInput`, `Enums\DecisionKind`, `Facades\AuditLog::record()`,
   `Facades\Erasure::anonymize()|purge()`, `Data\ErasureReport`, command `filament-acceptance:erase`.
-- `Http\DecisionLinkHandler` (abstract), Blade components `decision-forms`, `decision-summary`,
-  `fingerprint`; Filament `VerifySealedVersionAction`, `AuditEntriesRelationManager`.
+- `Http\DecisionLinkHandler` (abstract: `renderContent()`, `title()`, optional `isActionable()`,
+  `consentText()`, `locale()`, `timezone()`, `transition()`), Blade components `styles`,
+  `decision-forms`, `decision-summary`, `fingerprint`; later Filament `VerifySealedVersionAction`,
+  `AuditEntriesRelationManager`.
 - `Events\VersionSealed`, `Events\Decision{Recorded,Accepted,Declined}`, `Exceptions\*`; config and
   translation keys.
 
 ## Public routes and tokens
 
 No own routes: consumers register a `DecisionLinkHandler` subclass with public-links, which owns
-tokens, rate limits and the access log (E1-E5). Decisions and audit entries store the IP only as
+tokens, rate limits, headers and the access log (E1-E5). Its actions: `accept`, `decline`,
+`evidence` (POST, CSRF). Decision links are issued without a usage limit (design.md b). Decisions and audit entries store the IP only as
 public-links' HMAC (`IpHasher`), never their own (E4, E5).
 
 ## Conventions specific to this package

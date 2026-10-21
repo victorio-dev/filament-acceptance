@@ -34,4 +34,9 @@ marked `@internal`.
   deletes keep working.
 - `Erasure::anonymize()` / `Erasure::purge()` and `php artisan filament-acceptance:erase`: the
   deliberate, logged way to remove evidence.
+- Public decision pages: `Http\DecisionLinkHandler` (abstract; `renderContent()`, `title()`,
+  optional `isActionable()`, `consentText()`, `locale()`, `timezone()`, `transition()`) with
+  accept and decline forms, post/redirect/get, a read-only confirmation with the evidence
+  download, a page for superseded versions, and the Blade components `styles`,
+  `decision-forms`, `decision-summary`, `fingerprint`. English and Hungarian.
 - Requires `victorio/filament-public-links` `^0.2`.

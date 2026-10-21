@@ -72,3 +72,21 @@ function decide(?SealedVersion $version = null, ?DecisionInput $input = null, ?C
 {
     return Decisions::record($version ?? sealSample(), $input ?? acceptance(), visitorRequest(), transition: $transition);
 }
+
+/**
+ * The accept form as the page submits it, with the default consent text shown.
+ *
+ * @param  array<string, string>  $overrides
+ * @return array<string, string>
+ */
+function acceptForm(array $overrides = []): array
+{
+    return [
+        'name' => 'Anna Kovács',
+        'email' => 'anna@example.test',
+        'comment' => 'Looking forward to it.',
+        'consent' => '1',
+        'consent_hash' => hash('sha256', (string) __('filament-acceptance::filament-acceptance.form.consent')),
+        ...$overrides,
+    ];
+}

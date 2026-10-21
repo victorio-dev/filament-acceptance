@@ -1,7 +1,7 @@
 # filament-acceptance — design
 
-Status: **approved** 2026-10-21; steps 1-3 done (sealed versions; decisions and evidence files;
-audit log and retention). The short version lives in [../CLAUDE.md](../CLAUDE.md); this
+Status: **approved** 2026-10-21; steps 1-4 done (sealed versions; decisions and evidence files;
+audit log and retention; public decision pages). The short version lives in [../CLAUDE.md](../CLAUDE.md); this
 file is the detailed plan. No code exists yet. Decided in [ADR-0010](../../docs/decisions.md).
 
 ## 0. Purpose and boundaries
@@ -273,41 +273,81 @@ Pass the request for public events: the entry gets public-links' IP HMAC. Proper
 against the denylist above. `AuditLog::record(..., tenant: $team)` for entries without a version
 written outside a Filament request.
 
-### Public decision flow
+### Public decision flow (step 4)
 
 ```php
+use Illuminate\Contracts\Support\Htmlable;
+use Victorio\Acceptance\Enums\DecisionKind;
 use Victorio\Acceptance\Http\DecisionLinkHandler;
+use Victorio\Acceptance\Models\SealedVersion;
 use Victorio\PublicLinks\Data\PublicLinkVisit;
 
 final class QuoteLinkHandler extends DecisionLinkHandler
 {
-    protected function render(PublicLinkVisit $visit, SealedVersion $version, ?Decision $decision): Response { … }
-    protected function isActionable(SealedVersion $version): bool { … }   // current, not expired
-    protected function transition(SealedVersion $version, string $decision): bool { … }
-    protected function consentText(SealedVersion $version): string { … }
+    protected function renderContent(SealedVersion $version, PublicLinkVisit $visit): Htmlable
+    {
+        return view('filament-quotes::public.lines', ['quote' => $version->content()]);
+    }
+
+    protected function title(SealedVersion $version): string { … }               // "Quote Q-2026-0042"
+    protected function isActionable(SealedVersion $version): bool { … }          // optional: not expired
+    protected function consentText(SealedVersion $version): string { … }         // optional
+    protected function locale(SealedVersion $version): string { … }              // optional
+    protected function timezone(SealedVersion $version): string { … }            // optional
+    protected function transition(SealedVersion $version, DecisionKind $kind): bool { … } // optional
 }
+
+PublicLinks::handle(SealedVersion::class, 'quote', QuoteLinkHandler::class, 'Quote');
 ```
 
-`DecisionLinkHandler` implements public-links' `PublicLinkHandler` and `HandlesPublicLinkActions`:
-`countsOpensAsUses()` is false; actions `accept` and `decline` (a subclass may add more, quotes
-adds `pdf`); it validates (name and e-mail required for accept, checkbox required, lengths),
-calls `Decisions::record()`, spends a use with `recordUse()` only on success, writes the audit
-entry, and redirects (303) to the link's GET, which renders the confirmation (PRG). A lost race or
-a double submit lands on the confirmation of the existing decision, not on an error. Validation
-errors go back with old input; 419 shows a translated "page expired" message.
+**Decided (2026-10-21):**
 
-Blade components (no JavaScript, styled to sit inside `<x-filament-public-links::layout>`):
+- **Rendering:** the consumer renders only its content (`renderContent()` returns an
+  `Htmlable`, usually a view) and the title; the package owns the page, every state, the forms
+  and the post/redirect/get flow, so they are built and tested once. A consumer that wants full
+  control overrides `show()` and composes the public Blade components itself.
+- **After the decision** the link shows a read-only confirmation (200): the content, "Accepted
+  by … on …" (or declined), the comment or reason, the fingerprint and — when there is an
+  evidence file — a download button (`POST …/evidence`, hash-checked, 404 if missing or changed).
+  Not 410: the customer keeps a record of what they agreed to.
+- **Usage limit:** opening never spends a use; a recorded decision spends one (`recordUse()`).
+  Decision links are issued **without a usage limit**: with `maxUses(1)` the decision exhausts
+  the link, and the confirmation after the redirect answers 410 (pinned by a test; README and
+  docblock say so). A second decision is impossible anyway.
+- **Consent text:** `consentText()` (default: the translation `form.consent`). The page sends
+  its SHA-256 with the form; the POST recomputes the text on the server and records it only when
+  the hashes match, so the decision stores exactly the text the visitor saw — never text from
+  the client. If it changed in between, the form comes back with an error.
+- **Language:** `locale()` (default: the app locale) is set for the page, its validation
+  messages (the package's own, en/hu, independent of the host's validation translations) and the
+  stored decision.
 
-- `<x-filament-acceptance::decision-forms :visit :version />` — the accept form (name, e-mail,
-  consent checkbox, optional comment) and the decline form (optional name, e-mail, reason), with
-  the "simple electronic declaration, not a qualified electronic signature" note.
-- `<x-filament-acceptance::decision-summary :decision />` — "Accepted by … on …", comment or
-  reason.
-- `<x-filament-acceptance::fingerprint :version />` — version number and the first 12 hex digits
-  of the hash, for the page and the PDF footer.
+| Situation | Answer |
+| --- | --- |
+| GET, decidable | content, fingerprint, accept form, decline form |
+| GET, decided | content, fingerprint, confirmation, evidence download |
+| GET, `isActionable()` false | content, "can no longer be accepted or declined", contact |
+| GET, superseded version | 410 "A newer version was prepared", contact address |
+| POST accept/decline, success | `recordUse()`, 303 to the page (PRG), notice |
+| POST, invalid | 303 back, errors in the `accept` / `decline` bag, old input |
+| POST, already decided (two tabs, double click) | 303 to the page, "already recorded" notice — never 500 |
+| POST, superseded / refused / not actionable | 303 to the page, which explains it |
+| POST, tampered version | 409 page, contact address; nothing recorded, alert logged |
 
-All copy in `resources/lang/{en,hu}/filament-acceptance.php`; the consumer can override the
-consent text.
+The redirect target is the request URL without its action segment: the pages send
+`Referrer-Policy: no-referrer`, so `back()` has nothing to go on. The token appears in the HTML
+only in form actions. The contact address comes from public-links' branding (its configured
+`BrandingResolver`, so per-tenant brands work).
+
+Accessibility: a label for every field; errors tied with `aria-invalid` + `aria-describedby`, a
+`role="alert"` summary, `autofocus` on the first invalid field (no JavaScript); real submit
+buttons, at least 44 px high; the accept button uses the brand colour pair public-links picks for
+contrast; 16 px inputs (no zoom on iOS).
+
+Blade components (anonymous, `filament-acceptance::components.*`, publishable with the views):
+`<x-filament-acceptance::styles />`, `<x-filament-acceptance::decision-forms :action
+:consent-text :consent-hash />`, `<x-filament-acceptance::decision-summary :decision :decided-at
+:evidence-action />`, `<x-filament-acceptance::fingerprint :version />`.
 
 ### Filament building blocks
 

@@ -9,7 +9,7 @@ use function Pest\Laravel\withServerVariables;
 
 use Victorio\Acceptance\Events\DecisionAccepted;
 use Victorio\Acceptance\Events\DecisionRecorded;
-use Victorio\Acceptance\Tests\Fixtures\Handlers\DecideVersion;
+use Victorio\Acceptance\Models\Decision;
 use Victorio\PublicLinks\Builders\PendingPublicLink;
 use Victorio\PublicLinks\Models\PublicLinkAccess;
 use Victorio\PublicLinks\Support\IpHasher;
@@ -50,11 +50,11 @@ it('matches the access row of the request it came from, through public-links', f
     $issued = (new PendingPublicLink($version, 'decide'))->issue();
 
     withServerVariables(['REMOTE_ADDR' => VISITOR_IP])
-        ->post('/p/'.$issued->token.'/accept')
-        ->assertOk();
+        ->post('/p/'.$issued->token.'/accept', acceptForm())
+        ->assertStatus(303);
 
     $access = PublicLinkAccess::query()->sole();
-    $decision = DecideVersion::$lastDecision;
+    $decision = Decision::query()->sole();
 
     expect($decision?->ip_hash)->toBe($access->ip_hash)
         ->and($decision?->public_link_access_id)->toBe($access->getKey())

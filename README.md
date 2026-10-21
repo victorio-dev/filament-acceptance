@@ -4,7 +4,7 @@ Sealed, tamper-evident document versions and provable accept or decline decision
 on top of [victorio/filament-public-links](https://github.com/victorio-dev/filament-public-links).
 
 > **Status: in development, not released.** Sealed versions, the canonical JSON, decisions,
-> evidence files and the audit log exist; the public decision flow and the Filament parts follow
+> evidence files, the audit log and the public decision pages exist; the Filament parts follow
 > ([docs/design.md](docs/design.md)).
 
 - Requires PHP `^8.3`, Laravel `^12.0|^13.0`, Filament `^4.0|^5.0`
@@ -104,6 +104,56 @@ $decision->evidenceContents();                               // the bytes, after
 ```
 
 Use a private disk. The package never deletes an evidence file.
+
+## The public decision page
+
+Send a sealed version through a [public link](https://github.com/victorio-dev/filament-public-links)
+and let the customer accept or decline it, without a login. You render your content; the
+package does the rest — forms, validation, the confirmation, the superseded and closed states:
+
+```php
+use Illuminate\Contracts\Support\Htmlable;
+use Victorio\Acceptance\Http\DecisionLinkHandler;
+use Victorio\Acceptance\Models\SealedVersion;
+use Victorio\PublicLinks\Builders\PendingPublicLink;
+use Victorio\PublicLinks\Data\PublicLinkVisit;
+use Victorio\PublicLinks\Facades\PublicLinks;
+
+final class QuoteDecision extends DecisionLinkHandler
+{
+    protected function renderContent(SealedVersion $version, PublicLinkVisit $visit): Htmlable
+    {
+        return view('quotes.public', ['quote' => $version->content()]);   // escape with {{ }}
+    }
+
+    protected function title(SealedVersion $version): string
+    {
+        return 'Quote '.$version->content()['number'];
+    }
+
+    // Optional: isActionable(), consentText(), locale(), timezone(), transition()
+}
+
+// In a service provider's boot():
+PublicLinks::handle(SealedVersion::class, 'quote', QuoteDecision::class, 'Quote');
+
+// Send it:
+$url = (new PendingPublicLink($version, 'quote'))->expiresIn(days: 30)->issue()->url;
+```
+
+- The page shows your content, the version's fingerprint and an accept form (name, e-mail,
+  consent checkbox, comment) and a decline form (optional name, e-mail, reason). After the
+  decision the link shows a read-only confirmation, with a download of the evidence file if you
+  stored one.
+- **Issue decision links without a usage limit.** A recorded decision spends one use; with
+  `maxUses(1)` the confirmation page would answer 410. Two decisions are impossible anyway.
+- The consent text the customer saw is exactly what is stored with the acceptance; if it changes
+  while the page is open, the customer is asked to confirm again.
+- A superseded version explains that a newer one was prepared, with your contact address
+  (public-links' `branding.contact_email`).
+- English and Hungarian; labels, error messages tied to their fields, 44 px buttons, no
+  JavaScript. Restyle through public-links' branding; the views are publishable
+  (`filament-acceptance-views`) as a last resort.
 
 ## Retention and erasure
 

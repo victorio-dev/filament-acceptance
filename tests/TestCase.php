@@ -8,7 +8,7 @@ use Orchestra\Testbench\TestCase as Orchestra;
 use Victorio\Acceptance\AcceptanceServiceProvider;
 use Victorio\Acceptance\Models\SealedVersion;
 use Victorio\Acceptance\Tests\Fixtures\Filament\TestPanelProvider;
-use Victorio\Acceptance\Tests\Fixtures\Handlers\DecideVersion;
+use Victorio\Acceptance\Tests\Fixtures\Handlers\TestDecisionHandler;
 use Victorio\PublicLinks\Facades\PublicLinks;
 use Victorio\PublicLinks\PublicLinksServiceProvider;
 
@@ -18,8 +18,8 @@ abstract class TestCase extends Orchestra
     {
         parent::setUp();
 
-        DecideVersion::$lastDecision = null;
-        PublicLinks::handle(SealedVersion::class, 'decide', DecideVersion::class);
+        TestDecisionHandler::reset();
+        PublicLinks::handle(SealedVersion::class, 'decide', TestDecisionHandler::class);
     }
 
     /**
