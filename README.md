@@ -5,7 +5,7 @@ on top of [victorio/filament-public-links](https://github.com/victorio-dev/filam
 
 > **Status: in development, not released.** Sealed versions, the canonical JSON, decisions,
 > evidence files, the audit log and the public decision pages exist; the Filament parts follow
-> ([docs/design.md](docs/design.md)).
+> ([docs/design.md](https://github.com/victorio-dev/filament-acceptance/blob/main/docs/design.md)).
 
 - Requires PHP `^8.3`, Laravel `^12.0|^13.0`, Filament `^4.0|^5.0`
 - Free and open source (MIT), part of the Victorio suite of Filament plugins
@@ -230,5 +230,5 @@ implementation reproduces the bytes. Strings are not Unicode-normalized.
 
 ## License
 
-MIT — see [LICENSE.md](LICENSE.md). Please report vulnerabilities privately, as described in
-[SECURITY.md](SECURITY.md).
+MIT — see [LICENSE.md](https://github.com/victorio-dev/filament-acceptance/blob/main/LICENSE.md). Please report vulnerabilities privately, as described in
+[SECURITY.md](https://github.com/victorio-dev/filament-acceptance/blob/main/SECURITY.md).
