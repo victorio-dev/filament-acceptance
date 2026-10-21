@@ -7,18 +7,12 @@ marked `@internal`.
 
 ## [Unreleased]
 
-### Breaking
-
-- nothing yet
-
 ### Added
 
-- nothing yet
-
-### Changed
-
-- nothing yet
-
-### Fixed
-
-- nothing yet
+- `CanonicalJson::encode()`: the canonical JSON sealed versions are hashed over (RFC 8785 for
+  integers, strings, booleans, null and arrays); floats, objects and integers beyond ±(2^53 − 1)
+  are refused.
+- `HasSealedVersions` with `seal()`, `sealedVersions()` and `latestSealedVersion()`: immutable,
+  numbered versions with the SHA-256 of their content and an encrypted internal part.
+- `SealedVersion::verify()`, `content()`, `internal()`, `forCurrentTenant()`; the
+  `VersionSealed` event; Eloquent refuses to change or delete a sealed version.

@@ -6,6 +6,7 @@ namespace Victorio\Acceptance\Tests;
 
 use Orchestra\Testbench\TestCase as Orchestra;
 use Victorio\Acceptance\AcceptanceServiceProvider;
+use Victorio\Acceptance\Tests\Fixtures\Filament\TestPanelProvider;
 
 abstract class TestCase extends Orchestra
 {
@@ -18,11 +19,26 @@ abstract class TestCase extends Orchestra
      */
     protected function getPackageProviders($app): array
     {
+        // The auto-discovered providers of Filament and its dependencies, read from
+        // vendor/composer/installed.json (rule B4). All of them exist in Filament 4 and 5.
         return [
-            // Filament and Livewire service providers are added here as soon as the
-            // package renders a panel in tests. Read the list from the installed
-            // packages in playground/vendor first — never guess class names (rule B4).
+            \BladeUI\Heroicons\BladeHeroiconsServiceProvider::class,
+            \BladeUI\Icons\BladeIconsServiceProvider::class,
+            \Filament\Actions\ActionsServiceProvider::class,
+            \Filament\FilamentServiceProvider::class,
+            \Filament\Forms\FormsServiceProvider::class,
+            \Filament\Infolists\InfolistsServiceProvider::class,
+            \Filament\Notifications\NotificationsServiceProvider::class,
+            \Filament\QueryBuilder\QueryBuilderServiceProvider::class,
+            \Filament\Schemas\SchemasServiceProvider::class,
+            \Filament\Support\SupportServiceProvider::class,
+            \Filament\Tables\TablesServiceProvider::class,
+            \Filament\Widgets\WidgetsServiceProvider::class,
+            \Kirschbaum\PowerJoins\PowerJoinsServiceProvider::class,
+            \Livewire\LivewireServiceProvider::class,
+            \RyanChandler\BladeCaptureDirective\BladeCaptureDirectiveServiceProvider::class,
             AcceptanceServiceProvider::class,
+            TestPanelProvider::class,
         ];
     }
 
@@ -31,6 +47,9 @@ abstract class TestCase extends Orchestra
      */
     protected function defineEnvironment($app): void
     {
+        // The internal part of a sealed version is encrypted with the app key.
+        $app['config']->set('app.key', 'base64:'.base64_encode(str_repeat('k', 32)));
+
         // DB_CONNECTION=mysql|pgsql (`make test DB=...`, CI) keeps Testbench's own connection of
         // that name, whose config file reads DB_HOST, DB_DATABASE and friends. Without it
         // Testbench defaults to its `testing` sqlite connection (foreign keys off), which is
@@ -51,6 +70,9 @@ abstract class TestCase extends Orchestra
 
     protected function defineDatabaseMigrations(): void
     {
-        // $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
+        // The package migrations ship as .php.stub (published by the install command), which
+        // the migrator does not pick up; tests/database/migrations wraps them, plus the fixture
+        // tables.
+        $this->loadMigrationsFrom(__DIR__.'/database/migrations');
     }
 }

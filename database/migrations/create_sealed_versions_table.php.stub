@@ -11,25 +11,32 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create($this->table(), function (Blueprint $table): void {
-            $table->id();
+            $table->ulid('id')->primary();
 
-            // Tenant foreign key, when the package model is tenant-owned (rule D9).
-            // $table->foreignId(config('filament-acceptance.tenancy.foreign_key'))->constrained();
+            // The current Filament tenant at sealing time, when tenancy is on (rule D9).
+            $table->string($this->tenantColumn(), 36)->nullable()->index();
 
-            // Public tokens are stored as a hash only, never in plain text (rule E1).
-            // $table->string('token_hash', 64)->unique();
-            // $table->timestamp('expires_at')->nullable();
-            // $table->timestamp('revoked_at')->nullable();
+            // Always strings, so int, ULID and UUID keyed subjects share one column (design.md a).
+            $table->string('subject_type');
+            $table->string('subject_id', 36);
+            $table->string('kind', 32);
+            $table->unsignedInteger('number');
 
-            // Log and access-record tables only: the model uses MassPrunable with
-            // config('filament-acceptance.access_log.prune_after_days'), so the column the
-            // prunable() query filters on carries an index (rule E6).
-            // $table->timestamp('accessed_at')->index();
-            // $table->string('ip_hash', 64);          // hashed, never the raw IP (E4, E5)
-            // $table->string('user_agent', 255)->nullable();
-            // $table->string('action', 32);
+            // Canonical JSON in a text column, never `json`: MySQL would re-order the keys and
+            // change the bytes the hash is taken over.
+            $table->longText('content');
+            $table->char('content_hash', 64);
 
-            $table->timestamps();
+            // Encrypted with the app key, not part of the hash.
+            $table->longText('internal')->nullable();
+
+            $table->string('sealed_by_type')->nullable();
+            $table->string('sealed_by_id', 36)->nullable();
+            $table->timestamp('sealed_at');
+            $table->timestamp('superseded_at')->nullable();
+
+            // One number per subject; the backstop of the locked numbering in Sealer.
+            $table->unique(['subject_type', 'subject_id', 'number']);
         });
     }
 
@@ -41,8 +48,16 @@ return new class extends Migration
     private function table(): string
     {
         /** @var string $table */
-        $table = config('filament-acceptance.tables.examples');
+        $table = config('filament-acceptance.tables.versions');
 
         return $table;
+    }
+
+    private function tenantColumn(): string
+    {
+        /** @var string $column */
+        $column = config('filament-acceptance.tenancy.column');
+
+        return $column;
     }
 };

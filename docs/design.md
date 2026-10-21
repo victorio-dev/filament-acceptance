@@ -1,6 +1,6 @@
 # filament-acceptance — design
 
-Status: **proposed** 2026-10-21. The short version lives in [../CLAUDE.md](../CLAUDE.md); this
+Status: **approved** 2026-10-21; step 1 (sealed versions) done. The short version lives in [../CLAUDE.md](../CLAUDE.md); this
 file is the detailed plan. No code exists yet. Decided in [ADR-0010](../../docs/decisions.md).
 
 ## 0. Purpose and boundaries
@@ -45,7 +45,7 @@ delete; the only later write is `superseded_at`, set once through a query.
 | Column | Type | Notes |
 | --- | --- | --- |
 | `id` | `ulid` primary | The public link's `linkable`. |
-| `tenant_id` | `string(36)`, nullable | Copied from the subject. |
+| `tenant_id` | `string(36)`, nullable | The current Filament tenant at sealing time, or the one passed to `seal(tenant:)` (a queued job has no current tenant). Null with tenancy off. |
 | `subject_type`, `subject_id` | `string` | Morph to the document (a quote, a contract). No FK. |
 | `kind` | `string(32)` | `quote`, `contract`: which consumer owns it. |
 | `number` | `unsignedInteger` | 1, 2, 3 … per subject. `unique(subject_type, subject_id, number)`. |
@@ -56,8 +56,22 @@ delete; the only later write is `superseded_at`, set once through a query.
 | `sealed_at` | `timestamp` | |
 | `superseded_at` | `timestamp`, nullable | A newer version of the same subject was sealed. |
 
-Indexes: the unique one above; `(subject_type, subject_id, number)` serves "versions of this
-document"; `(tenant_id)`.
+Indexes: the unique one above, which also serves "versions of this document"; `(tenant_id)`.
+
+### What immutability covers (learned in step 1)
+
+| Path | Result |
+| --- | --- |
+| model `save()` / `saveQuietly()` of a change, `update()`, `increment()` | `SealedVersionIsImmutable` (model event, and the builder for the quiet paths) |
+| model `delete()` / `deleteQuietly()` / `forceDelete()`, `SealedVersion::destroy()` | `EvidenceIsPermanent` |
+| builder `update`, `upsert`, `touch`, `increment`, `decrement`, `incrementEach`, `decrementEach` — on `SealedVersion::query()` and on `$subject->sealedVersions()` | `SealedVersionIsImmutable` |
+| builder `delete`, `forceDelete`, `truncate` | `EvidenceIsPermanent` |
+| `->toBase()`, `DB::table()`, raw SQL, direct database access | **not prevented**; `verify()` detects every change, database permissions are the only prevention (README) |
+| `model:prune` of the versions or of a `Prunable` / `MassPrunable` subject | versions untouched (not prunable, no FK, no cascade) |
+
+Sealer's own write of `superseded_at` goes through `toBase()` on purpose: it is not sealed
+content. `verify()` is true only when the SHA-256 matches **and** the stored text is canonical,
+so a re-encoded copy with a fixed-up hash fails too.
 
 ### `victorio_decisions` (`tables.decisions`)
 
@@ -148,11 +162,14 @@ $version = $quote->seal(
     by: auth()->user(),
 );   // SealedVersion; number = previous + 1, the previous one gets superseded_at
 
-$quote->sealedVersions;            // newest first
-$quote->latestSealedVersion;
+$quote->sealedVersions;            // newest first, current tenant only
+$quote->latestSealedVersion();
 $version->content();               // decoded public content (array)
-$version->internal();              // decrypted internal part — admin side only
-$version->verify();                // bool: hash(content) === content_hash (and the decision's hash)
+$version->internal();              // decrypted internal part — admin side only; throws
+                                   // InternalPartUnreadable after an APP_KEY change without
+                                   // previous_keys (content, hash and verify() unaffected)
+$version->verify();                // bool: hash(content) === content_hash and content canonical
+                                   // (step 2 adds the decision's hash, step 3 the evidence file)
 ```
 
 Numbering is race-free: in one transaction the subject row is locked (`lockForUpdate`), the next

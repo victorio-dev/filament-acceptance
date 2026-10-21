@@ -4,7 +4,7 @@ Global rules: ../CLAUDE.md
 
 Package-level notes. The global rules are not repeated here — read them first, then this file.
 Keep this file current: it is the context for every task in this package. The detailed plan is
-[docs/design.md](docs/design.md); status: **design proposed**, no code yet (ADR-0010).
+[docs/design.md](docs/design.md); status: **step 1 of 5 done** (sealed versions, canonical JSON), ADR-0010.
 
 ## Purpose
 
@@ -25,7 +25,7 @@ resource), a legally binding e-signature (simple electronic signature under eIDA
 
 | Model | Table (config key) | Tenant-owned | Notes |
 | --- | --- | --- | --- |
-| `SealedVersion` | `filament-acceptance.tables.versions` | copied from the subject | immutable; content in a text column, never `json`; never deleted automatically |
+| `SealedVersion` | `filament-acceptance.tables.versions` | current Filament tenant, or `seal(tenant:)` | immutable; content in a text column, never `json`; never deleted automatically |
 | `Decision` | `filament-acceptance.tables.decisions` | copied | unique per version; HMAC IP; evidence file + hash; never deleted automatically |
 | `AuditEntry` | `filament-acceptance.tables.audit` | copied | `MassPrunable`, `audit.prune_after_days` 90, null = never |
 
@@ -34,8 +34,8 @@ resource), a legally binding e-signature (simple electronic signature under eIDA
 Everything listed here follows semver; everything else in `src/` is `@internal`.
 
 - `Support\CanonicalJson::encode()` (documented canonical form, RFC 8785-compatible subset).
-- `Concerns\HasSealedVersions`: `seal()`, `sealedVersions`, `latestSealedVersion`, `auditEntries`.
-- `Models\SealedVersion` (`content()`, `internal()`, `verify()`), `Models\Decision`
+- `Concerns\HasSealedVersions`: `seal()`, `sealedVersions()`, `latestSealedVersion()`, later `auditEntries`.
+- `Models\SealedVersion` (`content()`, `internal()`, `verify()`, `forCurrentTenant()`), `Models\Decision`
   (`storeEvidence()`, `evidenceContents()`), `Models\AuditEntry`.
 - `Facades\Decisions::record()`, `Data\DecisionInput`, `Facades\AuditLog::record()`.
 - `Http\DecisionLinkHandler` (abstract), Blade components `decision-forms`, `decision-summary`,
@@ -52,6 +52,10 @@ an HMAC (E4, E5).
 
 - MIT, public repository, like public-links; its API is public from 0.1, so semver matters.
 - Evidence (versions, decisions, evidence files) is never deleted by the package; tests pin it.
+  Immutability is enforced in the model and its builder; below Eloquent only `verify()` detects
+  changes (design.md a, "What immutability covers").
+- `Relations\StringKeyedMorphMany` and `Support\ModelKey` are copies of the public-links ones;
+  they move to `support` before a third package needs them (docs/roadmap.md).
 - Canonical content contains integers only, never floats; any change to the canonical form is a
   breaking change and needs an ADR.
 
