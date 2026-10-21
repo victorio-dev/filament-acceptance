@@ -325,12 +325,14 @@ PublicLinks::handle(SealedVersion::class, 'quote', QuoteLinkHandler::class, 'Quo
 
 | Situation | Answer |
 | --- | --- |
-| GET, decidable | content, fingerprint, one primary accept form; below it "I decline this document" in a `<details>`, closed (open when the decline form has errors) |
+| GET, decidable | content, fingerprint, one form (name, e-mail, comment, consent) with Accept (primary) and Decline (`formaction` to `decline`, `formnovalidate`) |
 | GET, decided | content, fingerprint, confirmation, evidence download |
 | GET, `isActionable()` false | content, "can no longer be accepted or declined", contact |
 | GET, superseded version | 410 "A newer version was prepared", contact address |
-| POST accept/decline, success | `recordUse()`, 303 to the page (PRG), notice |
-| POST, invalid | 303 back, errors in the `accept` / `decline` bag, old input |
+| POST decline, valid | 200 confirmation page: subject, fingerprint, "cannot be undone", name/e-mail/reason prefilled; nothing recorded |
+| POST back | 303 to the page with the values as old input |
+| POST accept / decline-confirm, success | `recordUse()`, 303 to the page (PRG), notice |
+| POST, invalid | 303 back, errors in the `decision` bag, old input (accept needs name, e-mail, consent; decline nothing) |
 | POST, already decided (two tabs, double click) | 303 to the page, "already recorded" notice — never 500 |
 | POST, superseded / refused / not actionable | 303 to the page, which explains it |
 | POST, tampered version | 409 page, contact address; nothing recorded, alert logged |

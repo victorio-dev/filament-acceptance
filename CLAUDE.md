@@ -56,9 +56,10 @@ Everything listed here follows semver; everything else in `src/` is `@internal`.
 ## Public routes and tokens
 
 No own routes: consumers register a `DecisionLinkHandler` subclass with public-links, which owns
-tokens, rate limits, headers and the access log (E1-E5). Its actions: `accept`, `decline`,
-`evidence` (POST, CSRF). Decision links are issued without a usage limit (design.md b). Decisions and audit entries store the IP only as
-public-links' HMAC (`IpHasher`), never their own (E4, E5).
+tokens, rate limits, headers and the access log (E1-E5). Its actions: `accept`, `decline` (asks to
+confirm), `decline-confirm`, `back`, `evidence` (POST, CSRF). Decision links are issued without a
+usage limit (design.md b). Decisions and audit entries store the IP only as public-links' HMAC
+(`IpHasher`), never their own (E4, E5).
 
 ## Conventions specific to this package
 

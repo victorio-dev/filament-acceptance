@@ -20,19 +20,26 @@ return [
     ],
 
     'form' => [
-        'accept_heading' => 'Elfogadás',
+        'heading' => 'Az Ön döntése',
         'name' => 'Az Ön neve',
         'email' => 'Az Ön e-mail-címe',
         'comment' => 'Megjegyzés (nem kötelező)',
+        'comment_help' => 'Ha elutasítja, ide írhatja az okát.',
         'consent' => 'Elfogadom ezt a dokumentumot és a feltételeit.',
         'accept_button' => 'Elfogadom',
-        'decline_summary' => 'Elutasítom ezt a dokumentumot',
         'decline_name' => 'Az Ön neve (nem kötelező)',
         'decline_email' => 'Az Ön e-mail-címe (nem kötelező)',
-        'reason' => 'Indok (nem kötelező)',
         'decline_button' => 'Elutasítom',
         'errors' => 'Kérjük, javítsa a megjelölt mezőket.',
         'legal_note' => 'Ez a megerősítés egyszerű elektronikus nyilatkozat, nem minősített elektronikus aláírás.',
+    ],
+
+    'decline_confirm' => [
+        'title' => 'Elutasítja ezt a dokumentumot?',
+        'warning' => 'Biztosan elutasítja ezt a dokumentumot? Ez nem vonható vissza.',
+        'reason' => 'Indok (nem kötelező)',
+        'submit' => 'Igen, elutasítom',
+        'back' => 'Vissza',
     ],
 
     'validation' => [

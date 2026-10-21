@@ -20,19 +20,26 @@ return [
     ],
 
     'form' => [
-        'accept_heading' => 'Accepter',
+        'heading' => 'Votre décision',
         'name' => 'Votre nom',
         'email' => 'Votre adresse e-mail',
         'comment' => 'Commentaire (facultatif)',
+        'comment_help' => 'Si vous refusez, vous pouvez indiquer ici la raison.',
         'consent' => 'J\'accepte ce document et ses conditions.',
         'accept_button' => 'J\'accepte',
-        'decline_summary' => 'Je refuse ce document',
         'decline_name' => 'Votre nom (facultatif)',
         'decline_email' => 'Votre adresse e-mail (facultatif)',
-        'reason' => 'Motif (facultatif)',
         'decline_button' => 'Je refuse',
         'errors' => 'Veuillez corriger les champs signalés.',
         'legal_note' => 'Cette confirmation est une déclaration électronique simple, et non une signature électronique qualifiée.',
+    ],
+
+    'decline_confirm' => [
+        'title' => 'Refuser ce document ?',
+        'warning' => 'Voulez-vous vraiment refuser ce document ? Cette action est irréversible.',
+        'reason' => 'Motif (facultatif)',
+        'submit' => 'Oui, refuser',
+        'back' => 'Retour',
     ],
 
     'validation' => [

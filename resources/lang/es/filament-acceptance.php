@@ -20,19 +20,26 @@ return [
     ],
 
     'form' => [
-        'accept_heading' => 'Aceptar',
+        'heading' => 'Su decisión',
         'name' => 'Su nombre',
         'email' => 'Su correo electrónico',
         'comment' => 'Comentario (opcional)',
+        'comment_help' => 'Si lo rechaza, puede escribir aquí el motivo.',
         'consent' => 'Acepto este documento y sus condiciones.',
         'accept_button' => 'Acepto',
-        'decline_summary' => 'Rechazo este documento',
         'decline_name' => 'Su nombre (opcional)',
         'decline_email' => 'Su correo electrónico (opcional)',
-        'reason' => 'Motivo (opcional)',
         'decline_button' => 'Rechazo',
         'errors' => 'Corrija los campos marcados.',
         'legal_note' => 'Esta confirmación es una declaración electrónica simple, no una firma electrónica cualificada.',
+    ],
+
+    'decline_confirm' => [
+        'title' => '¿Rechazar este documento?',
+        'warning' => '¿Seguro que quiere rechazar este documento? No se puede deshacer.',
+        'reason' => 'Motivo (opcional)',
+        'submit' => 'Sí, rechazar',
+        'back' => 'Volver',
     ],
 
     'validation' => [

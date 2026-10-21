@@ -64,7 +64,7 @@ it('has no hard-coded text with validation errors', function (): void {
     $consent = (string) __('filament-acceptance::filament-acceptance.form.consent');
 
     post($path.'/accept', acceptForm(['email' => 'not-an-address', 'consent_hash' => hash('sha256', $consent)]));
-    post($path.'/decline', ['decline_email' => 'not-an-address']);
+    post($path.'/decline', ['email' => 'not-an-address']);
 
     expect(PseudoLocale::untranslated((string) get($path)->getContent(), decisionData($version)))->toBe([]);
 });
@@ -79,6 +79,16 @@ it('has no hard-coded text on the confirmation', function (): void {
     $decision->storeEvidence('%PDF', 'quote.pdf');
 
     expect(PseudoLocale::untranslated((string) get($path)->getContent(), decisionData($version, $decision)))->toBe([]);
+});
+
+it('has no hard-coded text on the decline confirmation', function (): void {
+    ['path' => $path, 'version' => $version] = pseudoLink();
+
+    $html = (string) post($path.'/decline', ['name' => 'Anna Kovács', 'email' => 'anna@example.test', 'comment' => 'Looking forward to it.'])
+        ->assertOk()->getContent();
+
+    expect(PseudoLocale::untranslated($html, decisionData($version)))->toBe([])
+        ->and($html)->toContain('⟦');
 });
 
 it('has no hard-coded text on a closed version', function (): void {

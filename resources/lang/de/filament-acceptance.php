@@ -20,19 +20,26 @@ return [
     ],
 
     'form' => [
-        'accept_heading' => 'Annehmen',
+        'heading' => 'Ihre Entscheidung',
         'name' => 'Ihr Name',
         'email' => 'Ihre E-Mail-Adresse',
         'comment' => 'Kommentar (optional)',
+        'comment_help' => 'Wenn Sie ablehnen, können Sie hier den Grund angeben.',
         'consent' => 'Ich nehme dieses Dokument und seine Bedingungen an.',
         'accept_button' => 'Annehmen',
-        'decline_summary' => 'Ich lehne dieses Dokument ab',
         'decline_name' => 'Ihr Name (optional)',
         'decline_email' => 'Ihre E-Mail-Adresse (optional)',
-        'reason' => 'Grund (optional)',
         'decline_button' => 'Ablehnen',
         'errors' => 'Bitte korrigieren Sie die markierten Felder.',
         'legal_note' => 'Diese Bestätigung ist eine einfache elektronische Erklärung, keine qualifizierte elektronische Signatur.',
+    ],
+
+    'decline_confirm' => [
+        'title' => 'Dieses Dokument ablehnen?',
+        'warning' => 'Möchten Sie dieses Dokument wirklich ablehnen? Dies kann nicht rückgängig gemacht werden.',
+        'reason' => 'Grund (optional)',
+        'submit' => 'Ja, ablehnen',
+        'back' => 'Zurück',
     ],
 
     'validation' => [

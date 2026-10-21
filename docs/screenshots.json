@@ -133,7 +133,7 @@
             "quality": 85
         },
         {
-            "name": "public-page-decline",
+            "name": "public-page-decline-confirm",
             "path": "{approvalPath}",
             "viewport": {
                 "width": 1280,
@@ -144,10 +144,22 @@
             ],
             "steps": [
                 {
-                    "click": "summary"
+                    "fill": [
+                        "#fa-name",
+                        "Anna Kovács"
+                    ]
                 },
                 {
-                    "scroll": ".fa-decline button"
+                    "fill": [
+                        "#fa-comment",
+                        "The budget for this quarter is lower; could we talk about January?"
+                    ]
+                },
+                {
+                    "click": "button:has-text('Decline')"
+                },
+                {
+                    "wait": ".fa-warning"
                 }
             ],
             "capture": "viewport",

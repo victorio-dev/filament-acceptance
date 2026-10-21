@@ -20,19 +20,26 @@ return [
     ],
 
     'form' => [
-        'accept_heading' => 'Accept',
+        'heading' => 'Your decision',
         'name' => 'Your name',
         'email' => 'Your email address',
         'comment' => 'Comment (optional)',
+        'comment_help' => 'If you decline, you can write the reason here.',
         'consent' => 'I accept this document and its terms.',
         'accept_button' => 'Accept',
-        'decline_summary' => 'I decline this document',
         'decline_name' => 'Your name (optional)',
         'decline_email' => 'Your email address (optional)',
-        'reason' => 'Reason (optional)',
         'decline_button' => 'Decline',
         'errors' => 'Please correct the marked fields.',
         'legal_note' => 'This confirmation is a simple electronic declaration, not a qualified electronic signature.',
+    ],
+
+    'decline_confirm' => [
+        'title' => 'Decline this document?',
+        'warning' => 'Are you sure you want to decline this document? This cannot be undone.',
+        'reason' => 'Reason (optional)',
+        'submit' => 'Yes, decline',
+        'back' => 'Back',
     ],
 
     'validation' => [

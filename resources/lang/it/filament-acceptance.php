@@ -20,19 +20,26 @@ return [
     ],
 
     'form' => [
-        'accept_heading' => 'Accetta',
+        'heading' => 'La tua decisione',
         'name' => 'Il tuo nome',
         'email' => 'Il tuo indirizzo e-mail',
         'comment' => 'Commento (facoltativo)',
+        'comment_help' => 'Se rifiuti, puoi scrivere qui il motivo.',
         'consent' => 'Accetto questo documento e le sue condizioni.',
         'accept_button' => 'Accetto',
-        'decline_summary' => 'Rifiuto questo documento',
         'decline_name' => 'Il tuo nome (facoltativo)',
         'decline_email' => 'Il tuo indirizzo e-mail (facoltativo)',
-        'reason' => 'Motivo (facoltativo)',
         'decline_button' => 'Rifiuto',
         'errors' => 'Correggi i campi evidenziati.',
         'legal_note' => 'Questa conferma è una dichiarazione elettronica semplice, non una firma elettronica qualificata.',
+    ],
+
+    'decline_confirm' => [
+        'title' => 'Rifiutare questo documento?',
+        'warning' => 'Vuoi davvero rifiutare questo documento? Non può essere annullato.',
+        'reason' => 'Motivo (facoltativo)',
+        'submit' => 'Sì, rifiuta',
+        'back' => 'Indietro',
     ],
 
     'validation' => [

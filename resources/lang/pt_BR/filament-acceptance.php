@@ -20,19 +20,26 @@ return [
     ],
 
     'form' => [
-        'accept_heading' => 'Aceitar',
+        'heading' => 'Sua decisão',
         'name' => 'Seu nome',
         'email' => 'Seu e-mail',
         'comment' => 'Comentário (opcional)',
+        'comment_help' => 'Se recusar, você pode escrever o motivo aqui.',
         'consent' => 'Aceito este documento e suas condições.',
         'accept_button' => 'Aceito',
-        'decline_summary' => 'Recuso este documento',
         'decline_name' => 'Seu nome (opcional)',
         'decline_email' => 'Seu e-mail (opcional)',
-        'reason' => 'Motivo (opcional)',
         'decline_button' => 'Recuso',
         'errors' => 'Corrija os campos destacados.',
         'legal_note' => 'Esta confirmação é uma declaração eletrônica simples, não uma assinatura eletrônica qualificada.',
+    ],
+
+    'decline_confirm' => [
+        'title' => 'Recusar este documento?',
+        'warning' => 'Tem certeza de que deseja recusar este documento? Isso não pode ser desfeito.',
+        'reason' => 'Motivo (opcional)',
+        'submit' => 'Sim, recusar',
+        'back' => 'Voltar',
     ],
 
     'validation' => [

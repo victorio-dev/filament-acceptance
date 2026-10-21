@@ -17,7 +17,7 @@ exactly the version it was made on, and you can prove it later.
 
 - Send for approval from Filament with no code to write: say which fields the customer sees
 - A public decision page on [public links](https://github.com/victorio-dev/filament-public-links):
-  one accept form, declining on demand, a confirmation afterwards — in eight languages
+  one form with Accept and Decline, declining confirmed on a second page — in eight languages
 - Sealed, tamper-evident versions (canonical JSON + SHA-256) and race-free decisions bound to them
 - Stored documents with their hash, an activity log, a verify button
 - Evidence is never deleted automatically; one deliberate, logged way to erase it
@@ -137,7 +137,7 @@ Need more than fields — your own layout, a status change on acceptance? Write 
     <td width="66%">
       <picture>
         <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/victorio-dev/filament-acceptance/main/docs/images/public-page-dark.jpg">
-        <img alt="The decision page: the record's fields, the accept form and a link to decline" src="https://raw.githubusercontent.com/victorio-dev/filament-acceptance/main/docs/images/public-page.jpg">
+        <img alt="The decision page: the record's fields and one form with Accept and Decline buttons" src="https://raw.githubusercontent.com/victorio-dev/filament-acceptance/main/docs/images/public-page.jpg">
       </picture>
     </td>
     <td width="34%">
@@ -178,13 +178,14 @@ approval" and the activity log.
 documents and the activity, `update` to send for approval; without a policy the panel's
 `strictAuthorization()` decides. With Filament tenancy, only the current tenant's versions show.
 
-The customer sees one primary accept form; declining opens on demand. Errors stay next to their
-fields, in the page's language, and after the decision the page confirms it:
+The customer sees one form with an Accept and a Decline button; Decline asks once more before
+recording anything. Errors stay next to their fields, in the page's language, and after the
+decision the page confirms it:
 
 <table>
   <tr>
     <td><img alt="The accept form with an error on the e-mail address" src="https://raw.githubusercontent.com/victorio-dev/filament-acceptance/main/docs/images/public-page-errors.jpg"></td>
-    <td><img alt="Declining, opened: optional name, e-mail and reason" src="https://raw.githubusercontent.com/victorio-dev/filament-acceptance/main/docs/images/public-page-decline.jpg"></td>
+    <td><img alt="Declining asks for confirmation: optional name, e-mail and reason, Yes, decline and Back" src="https://raw.githubusercontent.com/victorio-dev/filament-acceptance/main/docs/images/public-page-decline-confirm.jpg"></td>
   </tr>
 </table>
 
@@ -246,9 +247,10 @@ PublicLinks::handle(SealedVersion::class, 'quote', QuoteDecision::class, 'Quote'
 $url = (new PendingPublicLink($version, 'quote'))->expiresIn(days: 30)->issue()->url;
 ```
 
-- The page shows your content, the version's fingerprint and one primary accept form (name,
-  e-mail, consent checkbox, comment); declining (optional name, e-mail, reason) opens on demand
-  below it, without JavaScript. After the decision the link shows a read-only confirmation, with
+- The page shows your content, the version's fingerprint and one form (name, e-mail, comment,
+  consent checkbox) with an Accept and a Decline button, without JavaScript. Accept needs the
+  name, e-mail and consent and stores the comment; Decline needs nothing, stores the comment as
+  the reason and first shows a confirmation page ("Yes, decline" or "Back", values kept). After the decision the link shows a read-only confirmation, with
   a download of the evidence file if you stored one.
 - **Issue decision links without a usage limit.** A recorded decision spends one use; with
   `maxUses(1)` the confirmation page would answer 410. Two decisions are impossible anyway.

@@ -49,6 +49,16 @@ abstract class DecisionLinkHandler implements HandlesPublicLinkActions, PublicLi
     public const string NOTICE = 'filament-acceptance.notice';
 
     /**
+     * The error bag of the decision form.
+     */
+    public const string ERRORS = 'decision';
+
+    /**
+     * The decision form's text fields, kept across the decline confirmation and errors.
+     */
+    private const array FIELDS = ['name', 'email', 'comment'];
+
+    /**
      * The sealed content, rendered by the consumer. Escape everything that is not trusted markup.
      */
     abstract protected function renderContent(SealedVersion $version, PublicLinkVisit $visit): Htmlable;
@@ -110,7 +120,7 @@ abstract class DecisionLinkHandler implements HandlesPublicLinkActions, PublicLi
      */
     public function actions(): array
     {
-        return ['accept', 'decline', 'evidence'];
+        return ['accept', 'decline', 'decline-confirm', 'back', 'evidence'];
     }
 
     public function show(PublicLinkVisit $visit): Response
@@ -144,21 +154,27 @@ abstract class DecisionLinkHandler implements HandlesPublicLinkActions, PublicLi
         ]);
     }
 
+    /**
+     * One form, two buttons. "accept" records the acceptance. "decline" records nothing: it shows
+     * a confirmation page, whose "decline-confirm" records the decline and whose "back" returns to
+     * the form with what was typed. Every step is a POST, so CSRF-protected.
+     */
     public function handleAction(string $action, PublicLinkVisit $visit): Response
     {
         $version = $this->version($visit);
         App::setLocale($this->locale($version));
 
-        $kind = match ($action) {
-            'accept' => DecisionKind::Accepted,
-            'decline' => DecisionKind::Declined,
-            'evidence' => null,
-            // A subclass that adds actions handles them before calling this method.
-            default => abort(404),
-        };
-
-        if ($kind === null) {
+        if ($action === 'evidence') {
             return $this->evidence($version);
+        }
+
+        if (! in_array($action, ['accept', 'decline', 'decline-confirm', 'back'], true)) {
+            // A subclass that adds actions handles them before calling this method.
+            abort(404);
+        }
+
+        if ($action === 'back') {
+            return $this->backToPage($visit)->withInput($visit->request->only(self::FIELDS));
         }
 
         if ($version->isSuperseded()) {
@@ -169,10 +185,16 @@ abstract class DecisionLinkHandler implements HandlesPublicLinkActions, PublicLi
             return $this->backToPage($visit, 'closed');
         }
 
-        $bag = $kind === DecisionKind::Accepted ? 'accept' : 'decline';
+        $kind = $action === 'accept' ? DecisionKind::Accepted : DecisionKind::Declined;
 
         try {
             $input = $this->input($version, $kind, $visit);
+
+            if ($action === 'decline') {
+                return $version->decision()->exists()
+                    ? $this->backToPage($visit, 'already_decided')
+                    : $this->declineConfirmation($visit, $version);
+            }
 
             Decisions::record(
                 $version,
@@ -183,7 +205,7 @@ abstract class DecisionLinkHandler implements HandlesPublicLinkActions, PublicLi
                 transition: fn (): bool => $this->transition($version, $kind),
             );
         } catch (ValidationException $exception) {
-            return $this->backToPage($visit)->withErrors($exception->errors(), $bag)->withInput();
+            return $this->backToPage($visit)->withErrors($exception->errors(), self::ERRORS)->withInput($visit->request->only([...self::FIELDS, 'consent']));
         } catch (DecisionAlreadyMade) {
             return $this->backToPage($visit, 'already_decided');
         } catch (VersionSuperseded) {
@@ -194,9 +216,27 @@ abstract class DecisionLinkHandler implements HandlesPublicLinkActions, PublicLi
             return $this->statusPage($visit, 'unverifiable', 409);
         }
 
+        // Only a recorded decision spends a use; the confirmation step does not.
         $visit->link->recordUse();
 
         return $this->backToPage($visit, $kind === DecisionKind::Accepted ? 'accepted' : 'declined');
+    }
+
+    /**
+     * "Do you really want to decline?" — with what was typed, editable. Answered by the POST
+     * itself (no redirect), so the values stay out of the session.
+     */
+    private function declineConfirmation(PublicLinkVisit $visit, SealedVersion $version): Response
+    {
+        $request = $visit->request;
+
+        return response()->view('filament-acceptance::decline-confirm', [
+            'visit' => $visit,
+            'version' => $version,
+            'title' => $this->title($version),
+            'action' => $this->pageUrl($visit),
+            'values' => array_map(static fn (mixed $value): string => is_string($value) ? $value : '', $request->only(self::FIELDS)),
+        ]);
     }
 
     /**
@@ -210,9 +250,10 @@ abstract class DecisionLinkHandler implements HandlesPublicLinkActions, PublicLi
         $request = $visit->request;
         $text = static fn (string $key): ?string => is_string($value = $request->input($key)) ? $value : null;
 
+        // The one form's comment field is the reason when declining.
         if ($kind === DecisionKind::Declined) {
-            $input = DecisionInput::decline(name: $text('decline_name'), email: $text('decline_email'), reason: $text('reason'), locale: App::getLocale());
-            $this->validate($input, $kind, ['name' => 'decline_name', 'email' => 'decline_email', 'reason' => 'reason'], []);
+            $input = DecisionInput::decline(name: $text('name'), email: $text('email'), reason: $text('comment'), locale: App::getLocale());
+            $this->validate($input, $kind, ['name' => 'name', 'email' => 'email', 'reason' => 'comment'], []);
 
             return $input;
         }

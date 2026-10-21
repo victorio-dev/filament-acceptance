@@ -20,19 +20,26 @@ return [
     ],
 
     'form' => [
-        'accept_heading' => 'Accepteren',
+        'heading' => 'Uw beslissing',
         'name' => 'Uw naam',
         'email' => 'Uw e-mailadres',
         'comment' => 'Opmerking (optioneel)',
+        'comment_help' => 'Als u weigert, kunt u hier de reden opgeven.',
         'consent' => 'Ik accepteer dit document en de voorwaarden ervan.',
         'accept_button' => 'Ik accepteer',
-        'decline_summary' => 'Ik weiger dit document',
         'decline_name' => 'Uw naam (optioneel)',
         'decline_email' => 'Uw e-mailadres (optioneel)',
-        'reason' => 'Reden (optioneel)',
         'decline_button' => 'Ik weiger',
         'errors' => 'Corrigeer de gemarkeerde velden.',
         'legal_note' => 'Deze bevestiging is een eenvoudige elektronische verklaring, geen gekwalificeerde elektronische handtekening.',
+    ],
+
+    'decline_confirm' => [
+        'title' => 'Dit document weigeren?',
+        'warning' => 'Weet u zeker dat u dit document wilt weigeren? Dit kan niet ongedaan worden gemaakt.',
+        'reason' => 'Reden (optioneel)',
+        'submit' => 'Ja, weigeren',
+        'back' => 'Terug',
     ],
 
     'validation' => [

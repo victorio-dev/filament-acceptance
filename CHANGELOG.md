@@ -15,9 +15,9 @@ First release.
   model (`approvalFields()`) or on the panel plugin (`AcceptancePlugin::approvable()`) — with a
   label per language. `SendForApprovalAction` seals the record in the chosen language and shows
   a link to copy; the customer opens it without logging in and accepts or declines.
-- **A public decision page.** One primary accept form (name, e-mail, consent, comment), declining
-  on demand below it, a read-only confirmation afterwards with the stored document, and clear
-  pages for a superseded or closed version. No JavaScript, labels and errors tied to their
+- **A public decision page.** One form (name, e-mail, comment, consent) with an Accept and a
+  Decline button; declining asks for confirmation first. A read-only confirmation with the stored
+  document follows, and clear pages explain a superseded or closed version. No JavaScript, labels and errors tied to their
   fields, 44 px touch targets, light and dark mode, right-to-left languages.
 - **The approvals table.** `DecisionsRelationManager` shows each version's status (awaiting
   decision, accepted, declined, superseded), who decided when, the comment or reason, the
