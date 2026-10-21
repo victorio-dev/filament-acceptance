@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Tracked on purpose. Without a config file Pest generates one inside an assert() call, which
+    never runs under zend.assertions=-1 (production php.ini, CI, the dev image), and every test run
+    then fails with "Could not read XML from file" naming the cache-directory option.
+    `make git-check` enforces this file. A local, git-ignored phpunit.xml overrides it.
+-->
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         cacheDirectory=".phpunit.cache"
+         colors="true">
+    <testsuites>
+        <testsuite name="Package">
+            <directory>tests</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>src</directory>
+        </include>
+    </source>
+</phpunit>

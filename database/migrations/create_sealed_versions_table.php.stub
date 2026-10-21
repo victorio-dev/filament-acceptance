@@ -1,0 +1,48 @@
+<?php
+
+declare(strict_types=1);
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create($this->table(), function (Blueprint $table): void {
+            $table->id();
+
+            // Tenant foreign key, when the package model is tenant-owned (rule D9).
+            // $table->foreignId(config('filament-acceptance.tenancy.foreign_key'))->constrained();
+
+            // Public tokens are stored as a hash only, never in plain text (rule E1).
+            // $table->string('token_hash', 64)->unique();
+            // $table->timestamp('expires_at')->nullable();
+            // $table->timestamp('revoked_at')->nullable();
+
+            // Log and access-record tables only: the model uses MassPrunable with
+            // config('filament-acceptance.access_log.prune_after_days'), so the column the
+            // prunable() query filters on carries an index (rule E6).
+            // $table->timestamp('accessed_at')->index();
+            // $table->string('ip_hash', 64);          // hashed, never the raw IP (E4, E5)
+            // $table->string('user_agent', 255)->nullable();
+            // $table->string('action', 32);
+
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists($this->table());
+    }
+
+    private function table(): string
+    {
+        /** @var string $table */
+        $table = config('filament-acceptance.tables.examples');
+
+        return $table;
+    }
+};

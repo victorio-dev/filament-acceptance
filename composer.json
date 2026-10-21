@@ -1,0 +1,75 @@
+{
+    "name": "victorio/filament-acceptance",
+    "description": "Sealed versions, provable accept or decline decisions and an audit log for Filament, on public links.",
+    "keywords": [
+        "laravel",
+        "filament",
+        "victorio",
+        "acceptance",
+        "audit",
+        "public-links"
+    ],
+    "homepage": "https://github.com/victorio-dev/filament-acceptance",
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Victorio",
+            "role": "Developer"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/victorio-dev/filament-acceptance/issues",
+        "source": "https://github.com/victorio-dev/filament-acceptance",
+        "security": "https://github.com/victorio-dev/filament-acceptance/security/policy"
+    },
+    "require": {
+        "php": "^8.3",
+        "filament/filament": "^4.0|^5.0",
+        "illuminate/contracts": "^12.0|^13.0",
+        "spatie/laravel-package-tools": "^1.16",
+        "victorio/filament-public-links": "^0.1",
+        "victorio/support": "^0.2"
+    },
+    "require-dev": {
+        "larastan/larastan": "^3.0",
+        "laravel/pint": "^1.18",
+        "orchestra/testbench": "^10.0|^11.0",
+        "pestphp/pest": "^3.0|^4.0",
+        "pestphp/pest-plugin-laravel": "^3.0|^4.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Victorio\\Acceptance\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Victorio\\Acceptance\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/pest",
+        "analyse": "vendor/bin/phpstan analyse",
+        "format": "vendor/bin/pint",
+        "format-check": "vendor/bin/pint --test"
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        },
+        "sort-packages": true
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Victorio\\Acceptance\\AcceptanceServiceProvider"
+            ]
+        },
+        "branch-alias": {
+            "dev-main": "0.1.x-dev"
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

@@ -1,0 +1,70 @@
+Global rules: ../CLAUDE.md
+
+# victorio/filament-acceptance
+
+Package-level notes. The global rules are not repeated here — read them first, then this file.
+Keep this file current: it is the context for every task in this package. The detailed plan is
+[docs/design.md](docs/design.md); status: **design proposed**, no code yet (ADR-0010).
+
+## Purpose
+
+The common layer for documents that someone outside the panel accepts or declines: sealed,
+immutable versions (canonical JSON + SHA-256), race-free decisions bound to that hash, the
+public accept/decline flow on public links, evidence files, an audit log. Used by
+`filament-quotes` now and `filament-contracts` later. Free and open source (MIT, public Packagist).
+Out of scope: anything domain-specific (pricing, numbering, statuses, PDF rendering, a Filament
+resource), a legally binding e-signature (simple electronic signature under eIDAS only).
+
+## Dependencies
+
+- `victorio/support` — shared helpers, as they appear.
+- `victorio/filament-public-links` `^0.1` — links to sealed versions, handler contracts, layout.
+- Never a paid package: `quotes` and `contracts` depend on this one, not the other way round.
+
+## Models and tables
+
+| Model | Table (config key) | Tenant-owned | Notes |
+| --- | --- | --- | --- |
+| `SealedVersion` | `filament-acceptance.tables.versions` | copied from the subject | immutable; content in a text column, never `json`; never deleted automatically |
+| `Decision` | `filament-acceptance.tables.decisions` | copied | unique per version; HMAC IP; evidence file + hash; never deleted automatically |
+| `AuditEntry` | `filament-acceptance.tables.audit` | copied | `MassPrunable`, `audit.prune_after_days` 90, null = never |
+
+## Public API
+
+Everything listed here follows semver; everything else in `src/` is `@internal`.
+
+- `Support\CanonicalJson::encode()` (documented canonical form, RFC 8785-compatible subset).
+- `Concerns\HasSealedVersions`: `seal()`, `sealedVersions`, `latestSealedVersion`, `auditEntries`.
+- `Models\SealedVersion` (`content()`, `internal()`, `verify()`), `Models\Decision`
+  (`storeEvidence()`, `evidenceContents()`), `Models\AuditEntry`.
+- `Facades\Decisions::record()`, `Data\DecisionInput`, `Facades\AuditLog::record()`.
+- `Http\DecisionLinkHandler` (abstract), Blade components `decision-forms`, `decision-summary`,
+  `fingerprint`; Filament `VerifySealedVersionAction`, `AuditEntriesRelationManager`.
+- `Events\VersionSealed`, `Events\DecisionRecorded`, `Exceptions\*`; config and translation keys.
+
+## Public routes and tokens
+
+No own routes: consumers register a `DecisionLinkHandler` subclass with public-links, which owns
+tokens, rate limits and the access log (E1-E5). Decisions and audit entries store the IP only as
+an HMAC (E4, E5).
+
+## Conventions specific to this package
+
+- MIT, public repository, like public-links; its API is public from 0.1, so semver matters.
+- Evidence (versions, decisions, evidence files) is never deleted by the package; tests pin it.
+- Canonical content contains integers only, never floats; any change to the canonical form is a
+  breaking change and needs an ADR.
+
+## Commands
+
+Run from the workspace root, in Docker — never on the host (rule I1):
+
+```bash
+make check PKG=filament-acceptance     # git-check + F1-F3
+make check-db PKG=filament-acceptance  # tests on sqlite, mysql, pgsql (F7)
+make check-lowest PKG=filament-acceptance  # lowest stable dependencies on PHP 8.3
+```
+
+## Open questions
+
+- None; drawn signatures and multiple signers are revisited with contracts (design.md f).

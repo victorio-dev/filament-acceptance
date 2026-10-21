@@ -1,0 +1,157 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # Six stable jobs: PHP 8.3/8.4/8.5 against both supported stacks.
+        # Two lowest jobs: the smallest supported versions, on the lowest supported PHP only.
+        # prefer-lowest on 8.4/8.5 would fail on dependencies released before those PHP versions
+        # existed, which says nothing about this package.
+        # Two database jobs: the development stack against MySQL 8.4 and PostgreSQL 17, the same
+        # versions as compose.yaml. Every other job runs on sqlite in memory.
+        include:
+          - php: '8.3'
+            laravel: '12.*'
+            filament: '4.*'
+            testbench: '10.*'
+            dependency-version: stable
+          - php: '8.4'
+            laravel: '12.*'
+            filament: '4.*'
+            testbench: '10.*'
+            dependency-version: stable
+          - php: '8.5'
+            laravel: '12.*'
+            filament: '4.*'
+            testbench: '10.*'
+            dependency-version: stable
+          - php: '8.3'
+            laravel: '13.*'
+            filament: '5.*'
+            testbench: '11.*'
+            dependency-version: stable
+          - php: '8.4'
+            laravel: '13.*'
+            filament: '5.*'
+            testbench: '11.*'
+            dependency-version: stable
+          - php: '8.5'
+            laravel: '13.*'
+            filament: '5.*'
+            testbench: '11.*'
+            dependency-version: stable
+          - php: '8.3'
+            laravel: '12.*'
+            filament: '4.*'
+            testbench: '10.*'
+            dependency-version: lowest
+          - php: '8.3'
+            laravel: '13.*'
+            filament: '5.*'
+            testbench: '11.*'
+            dependency-version: lowest
+          - php: '8.5'
+            laravel: '13.*'
+            filament: '5.*'
+            testbench: '11.*'
+            dependency-version: stable
+            database: mysql
+          - php: '8.5'
+            laravel: '13.*'
+            filament: '5.*'
+            testbench: '11.*'
+            dependency-version: stable
+            database: pgsql
+
+    name: PHP ${{ matrix.php }} / L ${{ matrix.laravel }} / F ${{ matrix.filament }} / ${{ matrix.dependency-version }} / ${{ matrix.database || 'sqlite' }}
+
+    # A service with an empty image is not started, so each job gets at most the one it needs.
+    services:
+      mysql:
+        image: ${{ matrix.database == 'mysql' && 'mysql:8.4.11' || '' }}
+        env:
+          MYSQL_ROOT_PASSWORD: victorio
+          MYSQL_DATABASE: testing
+          MYSQL_USER: victorio
+          MYSQL_PASSWORD: victorio
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -uvictorio -pvictorio --silent"
+          --health-interval 5s --health-timeout 5s --health-retries 30
+      postgres:
+        image: ${{ matrix.database == 'pgsql' && 'postgres:17.11' || '' }}
+        env:
+          POSTGRES_USER: victorio
+          POSTGRES_PASSWORD: victorio
+          POSTGRES_DB: testing
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -h 127.0.0.1 -U victorio -d testing"
+          --health-interval 5s --health-timeout 5s --health-retries 30
+
+    # Read by the package TestCase through Testbench's database config; unset means sqlite.
+    env:
+      DB_CONNECTION: ${{ matrix.database || 'sqlite' }}
+      DB_HOST: 127.0.0.1
+      DB_PORT: ${{ matrix.database == 'pgsql' && '5432' || '3306' }}
+      DB_DATABASE: testing
+      DB_USERNAME: victorio
+      DB_PASSWORD: victorio
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: dom, curl, libxml, mbstring, zip, pdo, sqlite, pdo_sqlite, pdo_mysql, pdo_pgsql, bcmath, intl
+          coverage: none
+
+      - name: Configure the private Composer repository
+        env:
+          COMPOSER_AUTH: ${{ secrets.COMPOSER_AUTH }}
+        run: echo "COMPOSER_AUTH=$COMPOSER_AUTH" >> "$GITHUB_ENV"
+
+      - name: Pin the matrix versions
+        run: |
+          composer require --no-update --no-interaction --dev \
+            "laravel/framework:${{ matrix.laravel }}" \
+            "orchestra/testbench:${{ matrix.testbench }}"
+          composer require --no-update --no-interaction \
+            "filament/filament:${{ matrix.filament }}"
+
+      - name: Install dependencies (stable)
+        if: matrix.dependency-version == 'stable'
+        run: composer update --prefer-dist --no-interaction --no-progress
+
+      - name: Install dependencies (lowest)
+        if: matrix.dependency-version == 'lowest'
+        run: composer update --prefer-dist --prefer-lowest --prefer-stable --no-interaction --no-progress
+
+      - name: Tests (F1)
+        run: composer test
+
+      # The lowest jobs test the lower bounds of the runtime dependencies. PHPStan and Pint are
+      # dev tools that never reach the buyer's project, and their oldest versions are not worth
+      # supporting, so F2 and F3 run only on the stable jobs.
+      - name: Static analysis (F2)
+        if: matrix.dependency-version != 'lowest'
+        run: composer analyse
+
+      - name: Formatting (F3)
+        if: matrix.dependency-version != 'lowest'
+        run: composer format-check
