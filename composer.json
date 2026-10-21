@@ -28,7 +28,7 @@
         "filament/filament": "^4.0|^5.0",
         "illuminate/contracts": "^12.0|^13.0",
         "spatie/laravel-package-tools": "^1.16",
-        "victorio/filament-public-links": "^0.1",
+        "victorio/filament-public-links": "^0.2",
         "victorio/support": "^0.2"
     },
     "require-dev": {
@@ -70,6 +70,6 @@
             "dev-main": "0.1.x-dev"
         }
     },
-    "minimum-stability": "stable",
+    "minimum-stability": "dev",
     "prefer-stable": true
 }

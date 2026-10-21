@@ -1,0 +1,76 @@
+<?php
+
+declare(strict_types=1);
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create($this->table('decisions'), function (Blueprint $table): void {
+            $table->ulid('id')->primary();
+
+            // One decision per version, enforced by the database; a version with a decision can
+            // never be deleted (evidence).
+            $table->foreignUlid('sealed_version_id')
+                ->unique()
+                ->constrained($this->table('versions'))
+                ->restrictOnDelete();
+
+            // Copied from the version (rule D9).
+            $table->string($this->tenantColumn(), 36)->nullable()->index();
+
+            $table->string('decision', 16);
+            $table->string('name')->nullable();
+            $table->string('email')->nullable();
+            $table->text('comment')->nullable();
+            $table->text('reason')->nullable();
+            $table->text('consent_text')->nullable();
+            $table->string('locale', 8);
+
+            // The version's content hash at the moment of the decision.
+            $table->char('content_hash', 64);
+
+            // The HMAC filament-public-links stores in its access log, never the raw IP (E4, E5);
+            // null for a decision recorded outside a request.
+            $table->char('ip_hash', 64)->nullable();
+            $table->string('user_agent')->nullable();
+
+            // The link and the access row of the request, without foreign keys: both may be
+            // pruned, the decision stays.
+            $table->string('public_link_id', 26)->nullable();
+            $table->unsignedBigInteger('public_link_access_id')->nullable();
+
+            // Written once, by storeEvidence().
+            $table->string('evidence_disk')->nullable();
+            $table->string('evidence_path')->nullable();
+            $table->char('evidence_hash', 64)->nullable();
+
+            $table->timestamp('decided_at');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists($this->table('decisions'));
+    }
+
+    private function table(string $name): string
+    {
+        /** @var string $table */
+        $table = config('filament-acceptance.tables.'.$name);
+
+        return $table;
+    }
+
+    private function tenantColumn(): string
+    {
+        /** @var string $column */
+        $column = config('filament-acceptance.tenancy.column');
+
+        return $column;
+    }
+};

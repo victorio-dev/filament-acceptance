@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Victorio\Acceptance\Support;
 
+use Victorio\Acceptance\Models\Decision;
 use Victorio\Acceptance\Models\SealedVersion;
 
 /**
@@ -27,6 +28,47 @@ final class AcceptanceConfig
         return $model;
     }
 
+    /**
+     * @return class-string<Decision>
+     */
+    public static function decisionModel(): string
+    {
+        /** @var class-string<Decision> $model */
+        $model = config(self::KEY.'.models.decision', Decision::class);
+
+        return $model;
+    }
+
+    public static function decisionsTable(): string
+    {
+        return self::string('tables.decisions', 'victorio_decisions');
+    }
+
+    public static function evidenceDisk(): string
+    {
+        return self::string('evidence.disk', 'local');
+    }
+
+    public static function evidencePath(): string
+    {
+        return trim(self::string('evidence.path', 'victorio/evidence'), '/');
+    }
+
+    public static function userAgentMaxLength(): int
+    {
+        return self::int('evidence.user_agent_max_length', 255);
+    }
+
+    public static function maxCommentLength(): int
+    {
+        return self::int('decisions.max_comment_length', 2000);
+    }
+
+    public static function maxReasonLength(): int
+    {
+        return self::int('decisions.max_reason_length', 2000);
+    }
+
     public static function versionsTable(): string
     {
         return self::string('tables.versions', 'victorio_sealed_versions');
@@ -47,5 +89,12 @@ final class AcceptanceConfig
         $value = config(self::KEY.'.'.$key, $default);
 
         return is_string($value) && $value !== '' ? $value : $default;
+    }
+
+    private static function int(string $key, int $default): int
+    {
+        $value = config(self::KEY.'.'.$key, $default);
+
+        return is_numeric($value) && (int) $value > 0 ? (int) $value : $default;
     }
 }

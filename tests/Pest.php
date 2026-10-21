@@ -3,6 +3,10 @@
 declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
+use Victorio\Acceptance\Data\DecisionInput;
+use Victorio\Acceptance\Facades\Decisions;
+use Victorio\Acceptance\Models\Decision;
 use Victorio\Acceptance\Models\SealedVersion;
 use Victorio\Acceptance\Tests\Fixtures\IntSubject;
 use Victorio\Acceptance\Tests\TestCase;
@@ -46,4 +50,25 @@ function sealSample(?IntSubject $subject = null): SealedVersion
 function stored(SealedVersion $version): SealedVersion
 {
     return SealedVersion::query()->whereKey($version->getKey())->firstOrFail();
+}
+
+function acceptance(): DecisionInput
+{
+    return DecisionInput::accept(name: 'Anna Kovács', email: 'anna@example.test', consentText: 'I accept this quote and its terms.', comment: 'Looking forward to it.', locale: 'hu');
+}
+
+/**
+ * A request as a public visitor sends it, from a fixed documentation address.
+ */
+function visitorRequest(string $ip = '203.0.113.7'): Request
+{
+    return Request::create('/p/token/accept', 'POST', server: ['REMOTE_ADDR' => $ip, 'HTTP_USER_AGENT' => 'Mozilla/5.0 (Test)']);
+}
+
+/**
+ * @param  (Closure(): bool)|null  $transition
+ */
+function decide(?SealedVersion $version = null, ?DecisionInput $input = null, ?Closure $transition = null): Decision
+{
+    return Decisions::record($version ?? sealSample(), $input ?? acceptance(), visitorRequest(), transition: $transition);
 }

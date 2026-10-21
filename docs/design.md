@@ -1,6 +1,6 @@
 # filament-acceptance — design
 
-Status: **approved** 2026-10-21; step 1 (sealed versions) done. The short version lives in [../CLAUDE.md](../CLAUDE.md); this
+Status: **approved** 2026-10-21; steps 1 (sealed versions) and 2 (decisions, evidence files) done. The short version lives in [../CLAUDE.md](../CLAUDE.md); this
 file is the detailed plan. No code exists yet. Decided in [ADR-0010](../../docs/decisions.md).
 
 ## 0. Purpose and boundaries
@@ -39,7 +39,7 @@ subjects coexist; pgsql refuses `varchar = integer`, `make check-db` covers it (
 
 ### `victorio_sealed_versions` (`tables.versions`)
 
-Written once. The model throws `SealedVersionIsImmutable` on update and `EvidenceIsPermanent` on
+Written once. The model throws `EvidenceIsImmutable` on update and `EvidenceIsPermanent` on
 delete; the only later write is `superseded_at`, set once through a query.
 
 | Column | Type | Notes |
@@ -62,9 +62,9 @@ Indexes: the unique one above, which also serves "versions of this document"; `(
 
 | Path | Result |
 | --- | --- |
-| model `save()` / `saveQuietly()` of a change, `update()`, `increment()` | `SealedVersionIsImmutable` (model event, and the builder for the quiet paths) |
+| model `save()` / `saveQuietly()` of a change, `update()`, `increment()` | `EvidenceIsImmutable` (model event, and the builder for the quiet paths) |
 | model `delete()` / `deleteQuietly()` / `forceDelete()`, `SealedVersion::destroy()` | `EvidenceIsPermanent` |
-| builder `update`, `upsert`, `touch`, `increment`, `decrement`, `incrementEach`, `decrementEach` — on `SealedVersion::query()` and on `$subject->sealedVersions()` | `SealedVersionIsImmutable` |
+| builder `update`, `upsert`, `touch`, `increment`, `decrement`, `incrementEach`, `decrementEach` — on `SealedVersion::query()` and on `$subject->sealedVersions()` | `EvidenceIsImmutable` |
 | builder `delete`, `forceDelete`, `truncate` | `EvidenceIsPermanent` |
 | `->toBase()`, `DB::table()`, raw SQL, direct database access | **not prevented**; `verify()` detects every change, database permissions are the only prevention (README) |
 | `model:prune` of the versions or of a `Prunable` / `MassPrunable` subject | versions untouched (not prunable, no FK, no cascade) |
@@ -79,17 +79,18 @@ so a re-encoded copy with a fixed-up hash fails too.
 | --- | --- | --- |
 | `id` | `ulid` primary | |
 | `sealed_version_id` | `ulid`, FK → versions, `restrictOnDelete` | **Unique**: one decision per version, enforced by the database. |
-| `tenant_id` | `string(36)`, nullable | |
-| `decision` | `string(16)` | `accepted` or `declined`. |
+| `tenant_id` | `string(36)`, nullable | Copied from the version, so a decision recorded later (a queued job) keeps the tenant. |
+| `decision` | `string(16)` | `DecisionKind`: `accepted` or `declined`. |
 | `name`, `email` | `string(255)`, nullable | Required to accept, optional to decline. |
 | `comment` | `text`, nullable | Optional remark when accepting. |
 | `reason` | `text`, nullable | Optional reason when declining — feedback for the seller. |
 | `consent_text` | `text`, nullable | The checkbox label exactly as shown (accept only). |
 | `locale` | `string(8)` | Language the form was shown in. |
 | `content_hash` | `char(64)` | Hash of the version's `content`, recomputed at the moment of the decision and equal to `sealed_versions.content_hash` (otherwise the decision is refused). |
-| `ip_hash` | `char(64)` | `hash_hmac('sha256', $ip, key)`, key `evidence.ip_hash_key` (default derived from `app.key`). Never the raw IP. |
+| `ip_hash` | `char(64)`, nullable | `Victorio\PublicLinks\Support\IpHasher::forRequest()`: byte for byte the `ip_hash` of the public-links access row of the same request (same HMAC, same key). Never the raw IP. Null for a decision recorded outside a request. |
 | `user_agent` | `string(255)`, nullable | Truncated to `evidence.user_agent_max_length`. |
-| `public_link_id` | `ulid`, nullable | The link used. No FK: links may be pruned, the decision stays. |
+| `public_link_id` | `string(26)`, nullable | The link used. No FK: links may be pruned, the decision stays. |
+| `public_link_access_id` | `unsignedBigInteger`, nullable | The access row of the request (public-links writes it before the handler runs and passes it as `$visit->access`). No FK: access rows are pruned after 90 days; the `ip_hash` still matches afterwards. |
 | `evidence_disk`, `evidence_path` | `string`, nullable | The stored evidence file (b, "Evidence files"). |
 | `evidence_hash` | `char(64)`, nullable | SHA-256 of that file's bytes. |
 | `decided_at` | `timestamp` | |
@@ -188,26 +189,42 @@ $decision = Decisions::record(
         consentText: $label, comment: null, locale: 'hu'),
     request: $request,                        // IP (HMAC) and user agent
     link: $visit->link,                       // optional
+    access: $visit->access,                   // optional: the access row of this request
     transition: fn (): bool => $quoteTransitions->accept($quote),   // the consumer's status change
 );
 ```
 
-In one transaction: recompute `hash('sha256', content)` and compare with `content_hash` in
-constant time (mismatch → `ContentHashMismatch`, logged as an alert, nothing written); call the
-consumer's `transition` (a conditional update returning whether it won); insert the decision
-(unique per version). If the transition returns false or the insert hits the unique index, the
-transaction rolls back and `DecisionAlreadyMade` is thrown with the existing decision, so two
-simultaneous accepts — or an accept racing a decline — leave exactly one decision and one
-status change. `DecisionRecorded` fires after commit. `DecisionInput::decline(name: null,
-email: null, reason: null, locale: …)` for the other case.
+First the input is validated (`DecisionInput::rules()`, `ValidationException`: accept needs
+name, a valid e-mail and the consent text; decline takes an optional name, e-mail and reason;
+comment and reason lengths from config). Then, in one transaction:
+
+1. lock the version row (`lockForUpdate`) — this also orders a decision against the sealing of a
+   newer version, which writes `superseded_at` on the same row;
+2. superseded → `VersionSuperseded`;
+3. `verify()` fails → `ContentHashMismatch`, logged as an alert with the version id only;
+4. a decision exists → `DecisionAlreadyMade` (with `->decision`);
+5. the consumer's `transition` returns anything but true → `DecisionRefused`;
+6. insert; the unique index on `sealed_version_id` turns a lost race into `DecisionAlreadyMade`.
+
+Any exception rolls back everything, including what the transition wrote. Then
+`DecisionRecorded` and `DecisionAccepted` or `DecisionDeclined`, after commit.
+`Decision::verify()` is true when the version verifies, its hash equals the decision's
+`content_hash`, and the evidence file (if any) matches its hash.
 
 ### Evidence files
 
 ```php
 $decision->storeEvidence(contents: $pdfBytes, filename: 'Q-2026-0042-v2.pdf');
 // writes to evidence.disk under evidence.path, sets evidence_path and evidence_hash once
-$decision->evidenceContents();    // bytes, after checking evidence_hash; throws on mismatch
+$decision->evidenceContents();    // bytes, after checking evidence_hash
+$decision->verifyEvidence();      // bool
 ```
+
+The path is `{evidence.path}/{decision id}/{first 12 hex of the SHA-256}-{sanitised filename}`;
+the disk name is stored with it, so changing `evidence.disk` later still finds old files. Written
+once: the file is put first, then a conditional update (`whereNull('evidence_path')`) claims the
+columns; a loser gets `EvidenceAlreadyStored` and its file stays (never deleted). Missing,
+changed or never stored → `EvidenceFileUnavailable`.
 
 Quotes uses it for the PDF of the accepted version (rendered by quotes, after the decision is
 committed, so the PDF can show the decision); contracts will store the signed PDF the same way.
@@ -271,8 +288,9 @@ consent text.
 
 ### Events
 
-`VersionSealed`, `DecisionRecorded` (with the decision, accepted or declined). Consumers translate
-them into their own (`QuoteAccepted`, …).
+`VersionSealed`, `DecisionRecorded`, `DecisionAccepted`, `DecisionDeclined` (with the
+decision), all `ShouldDispatchAfterCommit`. Consumers translate them into their own
+(`QuoteAccepted`, …).
 
 ## c) Config — `config/filament-acceptance.php`
 
@@ -296,7 +314,7 @@ return [
     ],
 
     'evidence' => [
-        'ip_hash_key' => env('ACCEPTANCE_IP_HASH_KEY'),   // null = derived from app.key
+        // no IP key of its own: decisions use filament-public-links' access_log.ip_hash_key
         'user_agent_max_length' => 255,
         'disk' => 'local',                 // evidence files; a private disk
         'path' => 'victorio/evidence',

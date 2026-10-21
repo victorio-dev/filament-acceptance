@@ -3,8 +3,8 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\DB;
+use Victorio\Acceptance\Exceptions\EvidenceIsImmutable;
 use Victorio\Acceptance\Exceptions\EvidenceIsPermanent;
-use Victorio\Acceptance\Exceptions\SealedVersionIsImmutable;
 use Victorio\Acceptance\Models\SealedVersion;
 use Victorio\Acceptance\Tests\Fixtures\IntSubject;
 
@@ -28,7 +28,7 @@ describe('through the model', function (): void {
         $version = sealSample();
         $version->forceFill(['kind' => 'other']);
 
-        expect(fn (): bool => $version->save())->toThrow(SealedVersionIsImmutable::class);
+        expect(fn (): bool => $version->save())->toThrow(EvidenceIsImmutable::class);
         assertUnchanged($version);
     });
 
@@ -36,21 +36,21 @@ describe('through the model', function (): void {
         $version = sealSample();
         $version->forceFill(['content' => '{}']);
 
-        expect(fn (): bool => $version->saveQuietly())->toThrow(SealedVersionIsImmutable::class);
+        expect(fn (): bool => $version->saveQuietly())->toThrow(EvidenceIsImmutable::class);
         assertUnchanged($version);
     });
 
     it('refuses update()', function (): void {
         $version = sealSample();
 
-        expect(fn (): never => $version->update(['kind' => 'other']))->toThrow(SealedVersionIsImmutable::class);
+        expect(fn (): never => $version->update(['kind' => 'other']))->toThrow(EvidenceIsImmutable::class);
         assertUnchanged($version);
     });
 
     it('refuses increment()', function (): void {
         $version = sealSample();
 
-        expect(fn (): mixed => $version->increment('number'))->toThrow(SealedVersionIsImmutable::class);
+        expect(fn (): mixed => $version->increment('number'))->toThrow(EvidenceIsImmutable::class);
         assertUnchanged($version);
     });
 
@@ -90,12 +90,12 @@ describe('through the query builder', function (): void {
         expect(fn (): mixed => $write(SealedVersion::query()))->toThrow($exception);
         assertUnchanged($version);
     })->with([
-        'update' => [fn ($query): mixed => $query->update(['kind' => 'other']), SealedVersionIsImmutable::class],
-        'upsert' => [fn ($query): mixed => $query->upsert([['id' => 'x', 'kind' => 'other']], ['id']), SealedVersionIsImmutable::class],
-        'increment' => [fn ($query): mixed => $query->increment('number'), SealedVersionIsImmutable::class],
-        'decrement' => [fn ($query): mixed => $query->decrement('number'), SealedVersionIsImmutable::class],
-        'incrementEach' => [fn ($query): mixed => $query->incrementEach(['number' => 1]), SealedVersionIsImmutable::class],
-        'touch' => [fn ($query): mixed => $query->touch(), SealedVersionIsImmutable::class],
+        'update' => [fn ($query): mixed => $query->update(['kind' => 'other']), EvidenceIsImmutable::class],
+        'upsert' => [fn ($query): mixed => $query->upsert([['id' => 'x', 'kind' => 'other']], ['id']), EvidenceIsImmutable::class],
+        'increment' => [fn ($query): mixed => $query->increment('number'), EvidenceIsImmutable::class],
+        'decrement' => [fn ($query): mixed => $query->decrement('number'), EvidenceIsImmutable::class],
+        'incrementEach' => [fn ($query): mixed => $query->incrementEach(['number' => 1]), EvidenceIsImmutable::class],
+        'touch' => [fn ($query): mixed => $query->touch(), EvidenceIsImmutable::class],
         'delete' => [fn ($query): mixed => $query->delete(), EvidenceIsPermanent::class],
         'forceDelete' => [fn ($query): mixed => $query->forceDelete(), EvidenceIsPermanent::class],
         'truncate' => [fn ($query): mixed => $query->truncate(), EvidenceIsPermanent::class],
@@ -108,7 +108,7 @@ describe('through the query builder', function (): void {
         expect(fn (): mixed => $write($subject))->toThrow($exception);
         assertUnchanged($version);
     })->with([
-        'update' => [fn (IntSubject $subject): mixed => $subject->sealedVersions()->update(['kind' => 'other']), SealedVersionIsImmutable::class],
+        'update' => [fn (IntSubject $subject): mixed => $subject->sealedVersions()->update(['kind' => 'other']), EvidenceIsImmutable::class],
         'delete' => [fn (IntSubject $subject): mixed => $subject->sealedVersions()->delete(), EvidenceIsPermanent::class],
     ]);
 });

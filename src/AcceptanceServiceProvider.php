@@ -7,6 +7,7 @@ namespace Victorio\Acceptance;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
+use Victorio\Acceptance\Support\DecisionRecorder;
 
 final class AcceptanceServiceProvider extends PackageServiceProvider
 {
@@ -22,7 +23,7 @@ final class AcceptanceServiceProvider extends PackageServiceProvider
             ->hasTranslations()
             // Every migration explicitly, by its stub filename without the extension. Never edit a
             // migration that is part of a tagged release — add a new one (rule A4).
-            ->hasMigrations(['create_sealed_versions_table'])
+            ->hasMigrations(['create_sealed_versions_table', 'create_decisions_table'])
             ->hasInstallCommand(function (InstallCommand $command): void {
                 // php artisan filament-acceptance:install (rule D11)
                 $command
@@ -30,5 +31,10 @@ final class AcceptanceServiceProvider extends PackageServiceProvider
                     ->publishMigrations()
                     ->askToRunMigrations();
             });
+    }
+
+    public function packageRegistered(): void
+    {
+        $this->app->singleton(DecisionRecorder::class);
     }
 }

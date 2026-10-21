@@ -4,7 +4,7 @@ Global rules: ../CLAUDE.md
 
 Package-level notes. The global rules are not repeated here — read them first, then this file.
 Keep this file current: it is the context for every task in this package. The detailed plan is
-[docs/design.md](docs/design.md); status: **step 1 of 5 done** (sealed versions, canonical JSON), ADR-0010.
+[docs/design.md](docs/design.md); status: **steps 1-2 of 5 done** (sealed versions, decisions, evidence files), ADR-0010.
 
 ## Purpose
 
@@ -18,7 +18,10 @@ resource), a legally binding e-signature (simple electronic signature under eIDA
 ## Dependencies
 
 - `victorio/support` — shared helpers, as they appear.
-- `victorio/filament-public-links` `^0.1` — links to sealed versions, handler contracts, layout.
+- `victorio/filament-public-links` `^0.2` — links to sealed versions, handler contracts, layout,
+  `IpHasher` (decisions store the access log's IP HMAC). Until public-links 0.2.0 is released,
+  `composer.json` has `"minimum-stability": "dev"`; set it back to `stable` before releasing
+  (`make release` refuses otherwise).
 - Never a paid package: `quotes` and `contracts` depend on this one, not the other way round.
 
 ## Models and tables
@@ -26,7 +29,7 @@ resource), a legally binding e-signature (simple electronic signature under eIDA
 | Model | Table (config key) | Tenant-owned | Notes |
 | --- | --- | --- | --- |
 | `SealedVersion` | `filament-acceptance.tables.versions` | current Filament tenant, or `seal(tenant:)` | immutable; content in a text column, never `json`; never deleted automatically |
-| `Decision` | `filament-acceptance.tables.decisions` | copied | unique per version; HMAC IP; evidence file + hash; never deleted automatically |
+| `Decision` | `filament-acceptance.tables.decisions` | copied from the version | unique per version; public-links' IP HMAC and access row; evidence file + hash; never deleted automatically |
 | `AuditEntry` | `filament-acceptance.tables.audit` | copied | `MassPrunable`, `audit.prune_after_days` 90, null = never |
 
 ## Public API
@@ -37,16 +40,17 @@ Everything listed here follows semver; everything else in `src/` is `@internal`.
 - `Concerns\HasSealedVersions`: `seal()`, `sealedVersions()`, `latestSealedVersion()`, later `auditEntries`.
 - `Models\SealedVersion` (`content()`, `internal()`, `verify()`, `forCurrentTenant()`), `Models\Decision`
   (`storeEvidence()`, `evidenceContents()`), `Models\AuditEntry`.
-- `Facades\Decisions::record()`, `Data\DecisionInput`, `Facades\AuditLog::record()`.
+- `Facades\Decisions::record()`, `Data\DecisionInput`, `Enums\DecisionKind`, later `Facades\AuditLog::record()`.
 - `Http\DecisionLinkHandler` (abstract), Blade components `decision-forms`, `decision-summary`,
   `fingerprint`; Filament `VerifySealedVersionAction`, `AuditEntriesRelationManager`.
-- `Events\VersionSealed`, `Events\DecisionRecorded`, `Exceptions\*`; config and translation keys.
+- `Events\VersionSealed`, `Events\Decision{Recorded,Accepted,Declined}`, `Exceptions\*`; config and
+  translation keys.
 
 ## Public routes and tokens
 
 No own routes: consumers register a `DecisionLinkHandler` subclass with public-links, which owns
 tokens, rate limits and the access log (E1-E5). Decisions and audit entries store the IP only as
-an HMAC (E4, E5).
+public-links' HMAC (`IpHasher`), never their own (E4, E5).
 
 ## Conventions specific to this package
 

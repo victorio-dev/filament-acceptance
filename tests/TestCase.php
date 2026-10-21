@@ -6,10 +6,22 @@ namespace Victorio\Acceptance\Tests;
 
 use Orchestra\Testbench\TestCase as Orchestra;
 use Victorio\Acceptance\AcceptanceServiceProvider;
+use Victorio\Acceptance\Models\SealedVersion;
 use Victorio\Acceptance\Tests\Fixtures\Filament\TestPanelProvider;
+use Victorio\Acceptance\Tests\Fixtures\Handlers\DecideVersion;
+use Victorio\PublicLinks\Facades\PublicLinks;
+use Victorio\PublicLinks\PublicLinksServiceProvider;
 
 abstract class TestCase extends Orchestra
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        DecideVersion::$lastDecision = null;
+        PublicLinks::handle(SealedVersion::class, 'decide', DecideVersion::class);
+    }
+
     /**
      * The $app parameter stays untyped because the parent declares it untyped;
      * adding a native type here would break the signature (rule D2 exception).
@@ -37,6 +49,7 @@ abstract class TestCase extends Orchestra
             \Kirschbaum\PowerJoins\PowerJoinsServiceProvider::class,
             \Livewire\LivewireServiceProvider::class,
             \RyanChandler\BladeCaptureDirective\BladeCaptureDirectiveServiceProvider::class,
+            PublicLinksServiceProvider::class,
             AcceptanceServiceProvider::class,
             TestPanelProvider::class,
         ];

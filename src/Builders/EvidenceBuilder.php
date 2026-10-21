@@ -6,16 +6,16 @@ namespace Victorio\Acceptance\Builders;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Victorio\Acceptance\Exceptions\EvidenceIsImmutable;
 use Victorio\Acceptance\Exceptions\EvidenceIsPermanent;
-use Victorio\Acceptance\Exceptions\SealedVersionIsImmutable;
 
 /**
- * The Eloquent builder of sealed versions: every mass write that could change or remove a sealed
- * row throws, so `SealedVersion::query()->update()`, `->delete()` and the same calls on a
- * subject's `sealedVersions()` relation fail loudly instead of rewriting evidence.
+ * The Eloquent builder of evidence models (sealed versions, decisions): every mass write that
+ * could change or remove a row throws, so `SealedVersion::query()->update()`, `->delete()` and the
+ * same calls on a relation fail loudly instead of rewriting evidence.
  *
  * Not covered, by design (the README says so): `->toBase()`, `DB::table()`, raw SQL and direct
- * database access. Those bypass Eloquent entirely; `SealedVersion::verify()` detects what they
+ * database access. Those bypass Eloquent entirely; `verify()` on the models detects what they
  * change, and only database permissions can prevent it.
  *
  * The parameters stay untyped where the parent declares them untyped (rule D2 exception).
@@ -26,14 +26,14 @@ use Victorio\Acceptance\Exceptions\SealedVersionIsImmutable;
  *
  * @internal
  */
-final class SealedVersionBuilder extends Builder
+final class EvidenceBuilder extends Builder
 {
     /**
      * @param  array<array-key, mixed>  $values
      */
     public function update(array $values): never
     {
-        throw SealedVersionIsImmutable::make('update');
+        throw EvidenceIsImmutable::make($this->getModel(), 'update');
     }
 
     /**
@@ -43,7 +43,7 @@ final class SealedVersionBuilder extends Builder
      */
     public function upsert(array $values, $uniqueBy, $update = null): never
     {
-        throw SealedVersionIsImmutable::make('upsert');
+        throw EvidenceIsImmutable::make($this->getModel(), 'upsert');
     }
 
     /**
@@ -51,7 +51,7 @@ final class SealedVersionBuilder extends Builder
      */
     public function touch($column = null): never
     {
-        throw SealedVersionIsImmutable::make('touch');
+        throw EvidenceIsImmutable::make($this->getModel(), 'touch');
     }
 
     /**
@@ -61,7 +61,7 @@ final class SealedVersionBuilder extends Builder
      */
     public function increment($column, $amount = 1, array $extra = []): never
     {
-        throw SealedVersionIsImmutable::make('increment');
+        throw EvidenceIsImmutable::make($this->getModel(), 'increment');
     }
 
     /**
@@ -71,7 +71,7 @@ final class SealedVersionBuilder extends Builder
      */
     public function decrement($column, $amount = 1, array $extra = []): never
     {
-        throw SealedVersionIsImmutable::make('decrement');
+        throw EvidenceIsImmutable::make($this->getModel(), 'decrement');
     }
 
     /**
@@ -80,7 +80,7 @@ final class SealedVersionBuilder extends Builder
      */
     public function incrementEach(array $columns, array $extra = []): never
     {
-        throw SealedVersionIsImmutable::make('incrementEach');
+        throw EvidenceIsImmutable::make($this->getModel(), 'incrementEach');
     }
 
     /**
@@ -89,21 +89,21 @@ final class SealedVersionBuilder extends Builder
      */
     public function decrementEach(array $columns, array $extra = []): never
     {
-        throw SealedVersionIsImmutable::make('decrementEach');
+        throw EvidenceIsImmutable::make($this->getModel(), 'decrementEach');
     }
 
     public function delete(): never
     {
-        throw EvidenceIsPermanent::make('delete');
+        throw EvidenceIsPermanent::make($this->getModel(), 'delete');
     }
 
     public function forceDelete(): never
     {
-        throw EvidenceIsPermanent::make('forceDelete');
+        throw EvidenceIsPermanent::make($this->getModel(), 'forceDelete');
     }
 
     public function truncate(): never
     {
-        throw EvidenceIsPermanent::make('truncate');
+        throw EvidenceIsPermanent::make($this->getModel(), 'truncate');
     }
 }

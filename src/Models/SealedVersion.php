@@ -4,29 +4,24 @@ declare(strict_types=1);
 
 namespace Victorio\Acceptance\Models;
 
-use Filament\Facades\Filament;
 use Illuminate\Contracts\Encryption\DecryptException;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
-use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Crypt;
 use JsonException;
-use Victorio\Acceptance\Builders\SealedVersionBuilder;
-use Victorio\Acceptance\Exceptions\EvidenceIsPermanent;
+use Victorio\Acceptance\Concerns\IsEvidence;
 use Victorio\Acceptance\Exceptions\InternalPartUnreadable;
 use Victorio\Acceptance\Exceptions\NotCanonicalizable;
-use Victorio\Acceptance\Exceptions\SealedVersionIsImmutable;
 use Victorio\Acceptance\Support\AcceptanceConfig;
 use Victorio\Acceptance\Support\CanonicalJson;
-use Victorio\Acceptance\Support\ModelKey;
 
 /**
  * An immutable snapshot of a document's public content, in canonical JSON, with its SHA-256
  * hash. Created only through `HasSealedVersions::seal()`; never updated, never deleted through
- * Eloquent (see SealedVersionBuilder for what that covers and what it cannot).
+ * Eloquent (IsEvidence; design.md a lists what that covers and what it cannot).
  *
  * Extension point: swap it through `filament-acceptance.models.version` with a subclass, which is
  * why the class is not final (rule D3). Keep the parent's behaviour; the package relies on it.
@@ -45,10 +40,12 @@ use Victorio\Acceptance\Support\ModelKey;
  * @property Carbon $sealed_at
  * @property Carbon|null $superseded_at
  * @property-read Model|null $subject
+ * @property-read Decision|null $decision
  */
 class SealedVersion extends Model
 {
     use HasUlids;
+    use IsEvidence;
 
     public $timestamps = false;
 
@@ -69,45 +66,9 @@ class SealedVersion extends Model
         'internal',
     ];
 
-    protected static function booted(): void
-    {
-        // The builder refuses mass writes; these cover the model paths that fire events.
-        static::updating(static function (): never {
-            throw SealedVersionIsImmutable::make('save');
-        });
-
-        static::deleting(static function (): never {
-            throw EvidenceIsPermanent::make('delete');
-        });
-    }
-
     public function getTable(): string
     {
         return AcceptanceConfig::versionsTable();
-    }
-
-    /**
-     * Refused outright: with nothing fillable, update() would otherwise discard the attributes
-     * silently and report success.
-     *
-     * @param  array<string, mixed>  $attributes
-     * @param  array<string, mixed>  $options
-     */
-    public function update(array $attributes = [], array $options = []): never
-    {
-        throw SealedVersionIsImmutable::make('update');
-    }
-
-    /**
-     * @param  QueryBuilder  $query
-     * @return SealedVersionBuilder<static>
-     */
-    public function newEloquentBuilder($query): SealedVersionBuilder
-    {
-        /** @var SealedVersionBuilder<static> $builder */
-        $builder = new SealedVersionBuilder($query);
-
-        return $builder;
     }
 
     /**
@@ -137,6 +98,16 @@ class SealedVersion extends Model
     public function sealedBy(): MorphTo
     {
         return $this->morphTo('sealed_by');
+    }
+
+    /**
+     * The accept or decline of this version, if there is one (at most one, by a unique index).
+     *
+     * @return HasOne<Decision, $this>
+     */
+    public function decision(): HasOne
+    {
+        return $this->hasOne(AcceptanceConfig::decisionModel(), 'sealed_version_id');
     }
 
     /**
@@ -207,21 +178,5 @@ class SealedVersion extends Model
     public function isSuperseded(): bool
     {
         return $this->superseded_at !== null;
-    }
-
-    /**
-     * With Filament tenancy on and a current tenant, only that tenant's versions (rule D9).
-     *
-     * @param  Builder<static>  $query
-     */
-    public function scopeForCurrentTenant(Builder $query): void
-    {
-        $tenant = AcceptanceConfig::tenancyEnabled() ? Filament::getTenant() : null;
-
-        if ($tenant === null) {
-            return;
-        }
-
-        $query->where($query->qualifyColumn(AcceptanceConfig::tenantColumn()), ModelKey::of($tenant));
     }
 }

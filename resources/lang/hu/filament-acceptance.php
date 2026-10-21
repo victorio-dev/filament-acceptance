@@ -2,5 +2,16 @@
 
 declare(strict_types=1);
 
-// User-facing strings arrive with the public decision forms (design.md e, step 4).
-return [];
+return [
+
+    // Field names in the validation messages of a decision.
+    'attributes' => [
+        'name' => 'név',
+        'email' => 'e-mail-cím',
+        'consent_text' => 'hozzájárulás',
+        'comment' => 'megjegyzés',
+        'reason' => 'indok',
+        'locale' => 'nyelv',
+    ],
+
+];

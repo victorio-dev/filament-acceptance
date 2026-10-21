@@ -3,8 +3,8 @@
 Sealed, tamper-evident document versions and provable accept or decline decisions for Filament,
 on top of [victorio/filament-public-links](https://github.com/victorio-dev/filament-public-links).
 
-> **Status: in development, not released.** Sealed versions and the canonical JSON exist;
-> decisions, the public decision flow, evidence files and the audit log follow
+> **Status: in development, not released.** Sealed versions, the canonical JSON, decisions and
+> evidence files exist; the public decision flow and the audit log follow
 > ([docs/design.md](docs/design.md)).
 
 - Requires PHP `^8.3`, Laravel `^12.0|^13.0`, Filament `^4.0|^5.0`
@@ -53,15 +53,53 @@ without keeping the old one in `APP_PREVIOUS_KEYS` makes the internal part unrea
 
 ### What "immutable" covers
 
-Through Eloquent, a sealed version cannot be changed or deleted: `save()`, `update()`,
+Through Eloquent, a sealed version or a decision cannot be changed or deleted: `save()`, `update()`,
 `increment()`, `delete()`, `forceDelete()`, `destroy()` and their quiet variants throw, and so do
 `update()`, `upsert()`, `increment()`, `delete()`, `truncate()` and friends on
-`SealedVersion::query()` and on `$quote->sealedVersions()`. Sealed versions are never pruned.
+`SealedVersion::query()`, `Decision::query()` and their relations. Neither is ever pruned.
 
 What no PHP code can stop: `DB::table()`, `->toBase()`, raw SQL and anyone with direct database
 access. The package makes such changes **detectable** — `verify()` returns false after a single
 changed byte — not impossible. To make them impossible, revoke `UPDATE` and `DELETE` on the
-`victorio_sealed_versions` table from the application's database user.
+`victorio_sealed_versions` and `victorio_decisions` tables from the application's database user.
+
+## Decisions
+
+```php
+use Victorio\Acceptance\Data\DecisionInput;
+use Victorio\Acceptance\Facades\Decisions;
+
+$decision = Decisions::record(
+    $version,
+    DecisionInput::accept(name: 'Anna Kovács', email: 'anna@example.test', consentText: $checkboxLabel),
+    request: $request,                                    // hashed IP and user agent
+    transition: fn (): bool => $quote->markAccepted(),    // your status change, same transaction
+);
+
+DecisionInput::decline(reason: 'Too expensive');          // name, e-mail and reason optional
+$decision->verify();     // the version is intact and is the one that was decided on
+```
+
+A version has at most one decision: a second accept, or an accept racing a decline, throws
+`DecisionAlreadyMade` and writes nothing (a unique index backs this up). A superseded version
+(`VersionSuperseded`), a tampered one (`ContentHashMismatch`) or your transition returning false
+(`DecisionRefused`) refuse the decision, and everything rolls back. `DecisionAccepted` and
+`DecisionDeclined` fire after the commit.
+
+Decisions are business records with personal data (name, e-mail) — your app is responsible for
+them. The IP is never stored: the decision keeps the same HMAC that
+[filament-public-links](https://github.com/victorio-dev/filament-public-links) writes into its
+access log, plus the id of that request's access row, so the two can be matched. Decisions are
+never pruned.
+
+### Evidence files
+
+```php
+$decision->storeEvidence($pdfBytes, 'Q-2026-0042-v2.pdf');   // once, on evidence.disk, with its SHA-256
+$decision->evidenceContents();                               // the bytes, after checking the hash
+```
+
+Use a private disk. The package never deletes an evidence file.
 
 ### The canonical form
 
