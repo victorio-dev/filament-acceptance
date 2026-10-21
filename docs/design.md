@@ -325,7 +325,7 @@ PublicLinks::handle(SealedVersion::class, 'quote', QuoteLinkHandler::class, 'Quo
 
 | Situation | Answer |
 | --- | --- |
-| GET, decidable | content, fingerprint, accept form, decline form |
+| GET, decidable | content, fingerprint, one primary accept form; below it "I decline this document" in a `<details>`, closed (open when the decline form has errors) |
 | GET, decided | content, fingerprint, confirmation, evidence download |
 | GET, `isActionable()` false | content, "can no longer be accepted or declined", contact |
 | GET, superseded version | 410 "A newer version was prepared", contact address |

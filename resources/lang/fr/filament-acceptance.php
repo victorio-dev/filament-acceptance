@@ -26,7 +26,7 @@ return [
         'comment' => 'Commentaire (facultatif)',
         'consent' => 'J\'accepte ce document et ses conditions.',
         'accept_button' => 'J\'accepte',
-        'decline_heading' => 'Refuser',
+        'decline_summary' => 'Je refuse ce document',
         'decline_name' => 'Votre nom (facultatif)',
         'decline_email' => 'Votre adresse e-mail (facultatif)',
         'reason' => 'Motif (facultatif)',
@@ -103,6 +103,9 @@ return [
         'actions' => [
             'send' => [
                 'label' => 'Envoyer pour approbation',
+                'heading' => 'Envoyer pour approbation',
+                'url_heading' => 'Lien d\'approbation',
+                'submit' => 'Envoyer',
             ],
             'download' => [
                 'label' => 'Télécharger le document',

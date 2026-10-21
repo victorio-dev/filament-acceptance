@@ -101,6 +101,20 @@ describe('SendForApprovalAction', function (): void {
         $page->assertMountedActionModalSee((string) $link->url());
     });
 
+    it('has its own headings and button', function (): void {
+        $document = approvalDocument();
+
+        Livewire::test(EditDocument::class, ['record' => $document->getKey()])
+            ->mountAction('sendForApproval')
+            ->assertMountedActionModalSee(['Send for approval', 'Send'])
+            ->assertMountedActionModalDontSee(['New public link', 'Create link']);
+
+        Livewire::test(EditDocument::class, ['record' => $document->getKey()])
+            ->callAction('sendForApproval', data: ['expiry' => '7', 'locale' => 'en'])
+            ->assertMountedActionModalSee('Approval link')
+            ->assertMountedActionModalDontSee('Public link');
+    });
+
     it('asks only for the expiry and the language', function (): void {
         Livewire::test(EditDocument::class, ['record' => approvalDocument()->getKey()])
             ->mountAction('sendForApproval')

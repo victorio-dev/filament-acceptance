@@ -82,6 +82,55 @@ describe('the page', function (): void {
             ->assertSee(substr($version->content_hash, 0, 12));
     });
 
+    it('offers one primary accept form and declining on demand, closed by default', function (): void {
+        ['path' => $path] = decisionLink();
+
+        $html = (string) get($path)->assertOk()->getContent();
+
+        expect(substr_count($html, '<button type="submit" class="fa-button fa-button-primary">'))->toBe(1)
+            ->and($html)->toContain('<details class="fa-decline" >')
+            ->and($html)->not->toMatch('/<details class="fa-decline"[^>]*\bopen\b/')
+            ->and($html)->toContain('<summary>I decline this document</summary>')
+            // The decline fields sit inside the details element.
+            ->and($html)->toMatch('#<details class="fa-decline"[^>]*>.*name="decline_name".*name="reason".*</details>#s')
+            ->and($html)->toContain('min-height: 44px')
+            ->and($html)->toContain('.fa-decline > summary:focus-visible');
+    });
+
+    it('sets autocomplete for name and e-mail, and off for free text', function (): void {
+        ['path' => $path] = decisionLink();
+
+        $html = (string) get($path)->getContent();
+
+        expect($html)->toMatch('/<input id="fa-name"[^>]*autocomplete="name"/')
+            ->and($html)->toMatch('/<input id="fa-email"[^>]*autocomplete="email"/')
+            ->and($html)->toMatch('/<textarea id="fa-comment"[^>]*autocomplete="off"/')
+            ->and($html)->toMatch('/<input id="fa-decline-name"[^>]*autocomplete="name"/')
+            ->and($html)->toMatch('/<input id="fa-decline-email"[^>]*autocomplete="email"/')
+            ->and($html)->toMatch('/<textarea id="fa-reason"[^>]*autocomplete="off"/');
+    });
+
+    it('opens the decline part when its form has errors, focused on the first one', function (): void {
+        ['path' => $path] = decisionLink();
+
+        submit($path, 'decline', ['decline_email' => 'not-an-address']);
+        $html = (string) get($path)->getContent();
+
+        expect($html)->toMatch('/<details class="fa-decline"\s+open\s*>/')
+            ->and($html)->toMatch('/<input id="fa-decline-email"[^>]*\bautofocus\b/')
+            ->and(substr_count($html, 'autofocus'))->toBe(1);
+    });
+
+    it('keeps the decline part closed when the accept form has errors', function (): void {
+        ['path' => $path] = decisionLink();
+
+        submit($path, 'accept', acceptForm(['email' => 'bad']));
+        $html = (string) get($path)->getContent();
+
+        expect($html)->not->toMatch('/<details class="fa-decline"[^>]*\bopen\b/')
+            ->and($html)->toMatch('/<input id="fa-email"[^>]*\bautofocus\b/');
+    });
+
     it('puts the token into form actions only', function (): void {
         ['path' => $path, 'token' => $token] = decisionLink();
 

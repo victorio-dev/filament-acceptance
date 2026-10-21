@@ -40,6 +40,9 @@ final class SendForApprovalAction
     {
         return IssuePublicLinkAction::make($name ?? 'sendForApproval')
             ->label(Authorizer::label('actions.send.label'))
+            ->modalHeading('filament-acceptance::filament-acceptance.filament.actions.send.heading')
+            ->urlModalHeading('filament-acceptance::filament-acceptance.filament.actions.send.url_heading')
+            ->modalSubmitActionLabel(Authorizer::label('actions.send.submit'))
             ->icon('heroicon-o-check-badge')
             ->fields(['expiry', 'locale'])
             ->issueUsing(static fn (Model $record, array $data, Closure $pending): IssuedPublicLink => self::send($record, $data, $pending))

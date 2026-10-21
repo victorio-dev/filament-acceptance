@@ -26,7 +26,7 @@ return [
         'comment' => 'Opmerking (optioneel)',
         'consent' => 'Ik accepteer dit document en de voorwaarden ervan.',
         'accept_button' => 'Ik accepteer',
-        'decline_heading' => 'Weigeren',
+        'decline_summary' => 'Ik weiger dit document',
         'decline_name' => 'Uw naam (optioneel)',
         'decline_email' => 'Uw e-mailadres (optioneel)',
         'reason' => 'Reden (optioneel)',
@@ -103,6 +103,9 @@ return [
         'actions' => [
             'send' => [
                 'label' => 'Ter goedkeuring versturen',
+                'heading' => 'Ter goedkeuring versturen',
+                'url_heading' => 'Goedkeuringslink',
+                'submit' => 'Versturen',
             ],
             'download' => [
                 'label' => 'Document downloaden',

@@ -26,7 +26,7 @@ return [
         'comment' => 'Comment (optional)',
         'consent' => 'I accept this document and its terms.',
         'accept_button' => 'Accept',
-        'decline_heading' => 'Decline',
+        'decline_summary' => 'I decline this document',
         'decline_name' => 'Your name (optional)',
         'decline_email' => 'Your email address (optional)',
         'reason' => 'Reason (optional)',
@@ -103,6 +103,9 @@ return [
         'actions' => [
             'send' => [
                 'label' => 'Send for approval',
+                'heading' => 'Send for approval',
+                'url_heading' => 'Approval link',
+                'submit' => 'Send',
             ],
             'download' => [
                 'label' => 'Download document',

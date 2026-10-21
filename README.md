@@ -214,8 +214,9 @@ PublicLinks::handle(SealedVersion::class, 'quote', QuoteDecision::class, 'Quote'
 $url = (new PendingPublicLink($version, 'quote'))->expiresIn(days: 30)->issue()->url;
 ```
 
-- The page shows your content, the version's fingerprint and an accept form (name, e-mail,
-  consent checkbox, comment) and a decline form (optional name, e-mail, reason). After the
+- The page shows your content, the version's fingerprint and one primary accept form (name,
+  e-mail, consent checkbox, comment); declining (optional name, e-mail, reason) opens on demand
+  below it, without JavaScript. After the
   decision the link shows a read-only confirmation, with a download of the evidence file if you
   stored one.
 - **Issue decision links without a usage limit.** A recorded decision spends one use; with

@@ -11,6 +11,7 @@
     <label for="{{ $id }}">{{ $label }}</label>
     @if (($type ?? 'text') === 'textarea')
         <textarea id="{{ $id }}" name="{{ $name }}" rows="3" maxlength="{{ $maxlength }}"
+            @if (isset($autocomplete)) autocomplete="{{ $autocomplete }}" @endif
             @if ($invalid) aria-invalid="true" aria-describedby="{{ $id }}-error" @endif
             @if ($autofocus) autofocus @endif>{{ old($name) }}</textarea>
     @else

@@ -26,7 +26,7 @@ return [
         'comment' => 'Commento (facoltativo)',
         'consent' => 'Accetto questo documento e le sue condizioni.',
         'accept_button' => 'Accetto',
-        'decline_heading' => 'Rifiuta',
+        'decline_summary' => 'Rifiuto questo documento',
         'decline_name' => 'Il tuo nome (facoltativo)',
         'decline_email' => 'Il tuo indirizzo e-mail (facoltativo)',
         'reason' => 'Motivo (facoltativo)',
@@ -103,6 +103,9 @@ return [
         'actions' => [
             'send' => [
                 'label' => 'Invia per approvazione',
+                'heading' => 'Invia per approvazione',
+                'url_heading' => 'Link di approvazione',
+                'submit' => 'Invia',
             ],
             'download' => [
                 'label' => 'Scarica documento',

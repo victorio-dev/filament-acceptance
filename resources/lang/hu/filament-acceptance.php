@@ -26,7 +26,7 @@ return [
         'comment' => 'Megjegyzés (nem kötelező)',
         'consent' => 'Elfogadom ezt a dokumentumot és a feltételeit.',
         'accept_button' => 'Elfogadom',
-        'decline_heading' => 'Elutasítás',
+        'decline_summary' => 'Elutasítom ezt a dokumentumot',
         'decline_name' => 'Az Ön neve (nem kötelező)',
         'decline_email' => 'Az Ön e-mail-címe (nem kötelező)',
         'reason' => 'Indok (nem kötelező)',
@@ -103,6 +103,9 @@ return [
         'actions' => [
             'send' => [
                 'label' => 'Jóváhagyásra küldés',
+                'heading' => 'Jóváhagyásra küldés',
+                'url_heading' => 'Jóváhagyási link',
+                'submit' => 'Küldés',
             ],
             'download' => [
                 'label' => 'Dokumentum letöltése',

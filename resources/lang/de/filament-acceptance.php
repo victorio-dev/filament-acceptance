@@ -26,7 +26,7 @@ return [
         'comment' => 'Kommentar (optional)',
         'consent' => 'Ich nehme dieses Dokument und seine Bedingungen an.',
         'accept_button' => 'Annehmen',
-        'decline_heading' => 'Ablehnen',
+        'decline_summary' => 'Ich lehne dieses Dokument ab',
         'decline_name' => 'Ihr Name (optional)',
         'decline_email' => 'Ihre E-Mail-Adresse (optional)',
         'reason' => 'Grund (optional)',
@@ -103,6 +103,9 @@ return [
         'actions' => [
             'send' => [
                 'label' => 'Zur Freigabe senden',
+                'heading' => 'Zur Freigabe senden',
+                'url_heading' => 'Freigabelink',
+                'submit' => 'Senden',
             ],
             'download' => [
                 'label' => 'Dokument herunterladen',

@@ -38,6 +38,14 @@
     .fa-button-primary { background: var(--fpl-primary); color: var(--fpl-on-primary); border: 2px solid var(--fpl-primary); }
     .fa-button-secondary { background: var(--fpl-bg); color: var(--fpl-text); border: 2px solid var(--fpl-text); }
     .fa-legal { color: var(--fpl-muted); font-size: .875rem; margin: 1rem 0 0; }
+    .fa-decline { margin: 0 0 1.5rem; }
+    .fa-decline > summary {
+        display: flex; align-items: center; min-height: 44px; padding: .5rem 0;
+        cursor: pointer; font-weight: 600; text-decoration: underline; text-underline-offset: .15em;
+    }
+    .fa-decline > summary:focus-visible { outline: 3px solid var(--fpl-text); outline-offset: 2px; }
+    .fa-decline[open] > summary { margin: 0 0 1rem; }
+    .fa-decline form { border: 1px solid var(--fpl-border); border-radius: .5rem; padding: 1.25rem; background: var(--fpl-surface); }
     .fa-summary dt { font-weight: 600; }
     .fa-summary dd { margin: 0 0 .75rem; white-space: pre-line; overflow-wrap: anywhere; }
     @media (max-width: 30rem) { .fa-button { width: 100%; } }
