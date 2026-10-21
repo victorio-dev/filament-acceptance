@@ -20,9 +20,8 @@ resource), a legally binding e-signature (simple electronic signature under eIDA
 
 - `victorio/support` — shared helpers, as they appear.
 - `victorio/filament-public-links` `^0.2` — links to sealed versions, handler contracts, layout,
-  `IpHasher` (decisions store the access log's IP HMAC). Until public-links 0.2.0 is released,
-  `composer.json` has `"minimum-stability": "dev"`; set it back to `stable` before releasing
-  (`make release` refuses otherwise).
+  `IpHasher` (decisions store the access log's IP HMAC). Stable releases only
+  (`"minimum-stability": "stable"`; `make release` refuses anything else).
 - Never a paid package: `quotes` and `contracts` depend on this one, not the other way round.
 
 ## Models and tables

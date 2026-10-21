@@ -75,6 +75,5 @@
             "dev-main": "0.1.x-dev"
         }
     },
-    "minimum-stability": "dev",
-    "prefer-stable": true
+    "minimum-stability": "stable"
 }
