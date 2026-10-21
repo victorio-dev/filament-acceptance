@@ -50,7 +50,9 @@ Everything listed here follows semver; everything else in `src/` is `@internal`.
 - Approval without code: `Approval\ApprovalField`, `approvalFields()` / `approvalTitle()` /
   `approvalConsentText()`, `SendForApprovalAction::purpose()`,
   `AcceptancePlugin::approvable()`, `Http\ApprovalLinkHandler`; Filament
-  `Actions\SendForApprovalAction`, `RelationManagers\DecisionsRelationManager`.
+  `Actions\{SendForApproval,ViewActivity,DownloadEvidence,VerifySealedVersion}Action`,
+  `RelationManagers\DecisionsRelationManager`; plugin `rowActions()`,
+  `modify{Row,Header,Toolbar}ActionsUsing()`.
 - `Events\VersionSealed`, `Events\Decision{Recorded,Accepted,Declined}`, `Exceptions\*`; config and
   translation keys.
 

@@ -6,8 +6,6 @@ namespace Victorio\Acceptance\Filament\RelationManagers;
 
 use Carbon\CarbonImmutable;
 use DateTimeInterface;
-use Filament\Actions\Action;
-use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Support\Enums\FontFamily;
 use Filament\Support\Facades\FilamentTimezone;
@@ -16,11 +14,13 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Str;
 use Livewire\Attributes\On;
-use Symfony\Component\HttpFoundation\StreamedResponse;
-use Victorio\Acceptance\Exceptions\EvidenceFileUnavailable;
+use Victorio\Acceptance\AcceptancePlugin;
+use Victorio\Acceptance\Filament\Actions\DownloadEvidenceAction;
 use Victorio\Acceptance\Filament\Actions\SendForApprovalAction;
+use Victorio\Acceptance\Filament\Actions\VerifySealedVersionAction;
+use Victorio\Acceptance\Filament\Actions\ViewActivityAction;
+use Victorio\Acceptance\Filament\Support\ActionLayout;
 use Victorio\Acceptance\Filament\Support\Authorizer;
 use Victorio\Acceptance\Models\Decision;
 use Victorio\Acceptance\Models\SealedVersion;
@@ -38,6 +38,7 @@ use Victorio\PublicLinks\Filament\RelationManagers\PublicLinksRelationManager;
  * Status, who decided when, comment or reason, fingerprint; download of the stored document,
  * verification, the activity log, and "Send for approval". Seeing it needs `view` on the owner
  * record, sending needs `update`. With Filament tenancy only the current tenant's versions show.
+ * The actions' layout and lists are set on AcceptancePlugin (rowActions(), modify*ActionsUsing()).
  */
 final class DecisionsRelationManager extends RelationManager
 {
@@ -62,6 +63,8 @@ final class DecisionsRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
+        $plugin = AcceptancePlugin::current();
+
         return $table
             ->modifyQueryUsing(static fn (Builder $query): Builder => $query->with('decision'))
             ->columns([
@@ -101,14 +104,16 @@ final class DecisionsRelationManager extends RelationManager
                     ->fontFamily(FontFamily::Mono),
             ])
             ->emptyStateHeading(Authorizer::label('relation_manager.empty'))
-            ->headerActions([
+            // The layout and the lists come from the plugin (rowActions(), modify*ActionsUsing()).
+            ->headerActions(ActionLayout::modify([
                 SendForApprovalAction::make(),
-                self::activityAction(),
-            ])
-            ->recordActions([
-                self::downloadAction(),
-                self::verifyAction(),
-            ]);
+                ViewActivityAction::make(),
+            ], $plugin->getModifyHeaderActionsUsing()))
+            ->recordActions(ActionLayout::rows([
+                DownloadEvidenceAction::make(),
+                VerifySealedVersionAction::make(),
+            ], $plugin->getRowActions(), $plugin->getModifyRowActionsUsing()))
+            ->toolbarActions(ActionLayout::toolbar([], $plugin->getModifyToolbarActionsUsing()));
     }
 
     private static function status(SealedVersion $version): string
@@ -128,92 +133,5 @@ final class DecisionsRelationManager extends RelationManager
         $localized = $date->locale(App::getLocale());
 
         return ($localized instanceof CarbonImmutable ? $localized : $date)->isoFormat('LLL');
-    }
-
-    private static function owner(mixed $livewire): ?Model
-    {
-        $owner = $livewire instanceof RelationManager ? $livewire->getOwnerRecord() : null;
-
-        return $owner instanceof Model ? $owner : null;
-    }
-
-    private static function downloadAction(): Action
-    {
-        $allowed = static fn (mixed $livewire, SealedVersion $record): bool => $record->decision?->evidence_path !== null
-            && Authorizer::allows(Authorizer::VIEW, self::owner($livewire));
-
-        return Action::make('downloadEvidence')
-            ->label(Authorizer::label('actions.download.label'))
-            ->icon('heroicon-o-arrow-down-tray')
-            ->iconButton()
-            ->tooltip(Authorizer::label('actions.download.label'))
-            ->visible($allowed)
-            ->authorize($allowed)
-            ->action(static function (SealedVersion $record): ?StreamedResponse {
-                $decision = $record->decision;
-
-                try {
-                    $contents = $decision?->evidenceContents();
-                } catch (EvidenceFileUnavailable) {
-                    $contents = null;
-                }
-
-                if ($decision === null || $contents === null) {
-                    Notification::make()->danger()->title(Authorizer::label('actions.download.failed'))->send();
-
-                    return null;
-                }
-
-                $filename = Str::after(basename((string) $decision->evidence_path), '-');
-
-                return response()->streamDownload(static function () use ($contents): void {
-                    echo $contents;
-                }, $filename);
-            });
-    }
-
-    private static function verifyAction(): Action
-    {
-        $allowed = static fn (mixed $livewire): bool => Authorizer::allows(Authorizer::VIEW, self::owner($livewire));
-
-        return Action::make('verifySealedVersion')
-            ->label(Authorizer::label('actions.verify.label'))
-            ->icon('heroicon-o-shield-check')
-            ->iconButton()
-            ->tooltip(Authorizer::label('actions.verify.label'))
-            ->visible($allowed)
-            ->authorize($allowed)
-            ->action(static function (SealedVersion $record): void {
-                $intact = $record->verify() && ($record->decision === null || $record->decision->verify());
-
-                $notification = Notification::make()->title(Authorizer::label($intact ? 'actions.verify.ok' : 'actions.verify.failed'));
-                ($intact ? $notification->success() : $notification->danger())->send();
-            });
-    }
-
-    private static function activityAction(): Action
-    {
-        $allowed = static fn (mixed $livewire): bool => Authorizer::allows(Authorizer::VIEW, self::owner($livewire));
-
-        return Action::make('viewActivity')
-            ->label(Authorizer::label('actions.activity.label'))
-            ->icon('heroicon-o-clock')
-            ->visible($allowed)
-            ->authorize($allowed)
-            ->slideOver()
-            ->modalHeading(Authorizer::label('actions.activity.heading'))
-            ->modalSubmitAction(false)
-            ->modalCancelActionLabel(Authorizer::label('actions.activity.close'))
-            ->modalContent(static function (mixed $livewire): \Illuminate\Contracts\View\View {
-                $owner = self::owner($livewire);
-                $entries = $owner !== null && method_exists($owner, 'auditEntries')
-                    ? $owner->auditEntries()->limit(50)->get()
-                    : collect();
-
-                /** @var view-string $view */
-                $view = 'filament-acceptance::filament.activity';
-
-                return view($view, ['entries' => $entries, 'date' => self::date(...)]);
-            });
     }
 }

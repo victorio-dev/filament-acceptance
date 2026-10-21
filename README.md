@@ -178,6 +178,38 @@ approval" and the activity log.
 documents and the activity, `update` to send for approval; without a policy the panel's
 `strictAuthorization()` decides. With Filament tenancy, only the current tenant's versions show.
 
+### Appearance
+
+The approvals table is wide, so its row actions are icon buttons with their label as tooltip — a
+look Filament uses too. Change it on the plugin, or change any action of the package wherever it
+appears with Filament's `configureUsing()`:
+
+```php
+use Filament\Actions\Action;
+use Victorio\Acceptance\AcceptancePlugin;
+use Victorio\Acceptance\Filament\Actions\VerifySealedVersionAction;
+
+$panel->plugins([
+    AcceptancePlugin::make()
+        ->rowActions('group')        // 'icons' (default), 'labels' or 'group' (one menu)
+        // Keyed by name; return them in your order, leave some out, change or add your own.
+        ->modifyRowActionsUsing(fn (array $actions): array => [
+            $actions['verifySealedVersion'],
+            Action::make('remind')->icon('heroicon-o-bell')->action(/* … */),
+        ])
+        ->modifyHeaderActionsUsing(fn (array $actions): array => [$actions['sendForApproval']])
+        ->modifyToolbarActionsUsing(fn (array $actions): array => [/* your bulk actions */]),
+]);
+
+// In a service provider's boot(), for every table and page:
+VerifySealedVersionAction::configureUsing(fn (VerifySealedVersionAction $action) => $action->color('success'));
+```
+
+The actions are public classes — `SendForApprovalAction`, `ViewActivityAction` (also as a page
+action of the record), `DownloadEvidenceAction`, `VerifySealedVersionAction` — for your own
+tables of sealed versions. Icons are heroicons; hidden actions stay hidden, and refused, in every
+layout.
+
 The customer sees one form with an Accept and a Decline button; Decline asks once more before
 recording anything. Errors stay next to their fields, in the page's language, and after the
 decision the page confirms it:

@@ -24,7 +24,11 @@ First release.
 - **The approvals table.** `DecisionsRelationManager` shows each version's status (awaiting
   decision, accepted, declined, superseded), who decided when, the comment or reason, the
   fingerprint; download the stored document, verify a version, see the activity. Permissions
-  follow the record's `view` / `update` policy, tenancy is respected.
+  follow the record's `view` / `update` policy, tenancy is respected. Its look is yours:
+  `AcceptancePlugin::rowActions('icons'|'labels'|'group')` and `modifyRowActionsUsing()`,
+  `modifyHeaderActionsUsing()`, `modifyToolbarActionsUsing()`; every action is a public class
+  (`ViewActivityAction`, `DownloadEvidenceAction`, `VerifySealedVersionAction`) that works with
+  `configureUsing()`.
 - **Proof of what was accepted.** Every version is sealed as canonical JSON with its SHA-256
   (RFC 8785-compatible, re-checkable without this package); a decision is bound to exactly that
   hash and records the consent text the customer saw; a stored document keeps its own hash.

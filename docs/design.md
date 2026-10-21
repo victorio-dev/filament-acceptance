@@ -389,6 +389,12 @@ Blade components (anonymous, `filament-acceptance::components.*`, publishable wi
   verify; header actions send for approval and activity (slide-over, last 50 audit entries);
   refreshes on public-links' `LINKS_CHANGED`. `view` to see, `update` to send; no policy → allowed
   unless `strictAuthorization()`.
+- **Appearance** (docs/conventions.md, "Filament appearance"): the actions are public classes
+  (`ViewActivityAction`, `DownloadEvidenceAction`, `VerifySealedVersionAction`; the owner for
+  authorization is the relation manager's owner, else the record or the version's subject).
+  `AcceptancePlugin::rowActions()` defaults to `icons` — the table has eight columns, labelled
+  row actions overflowed it — and `modify{Row,Header,Toolbar}ActionsUsing()` reorder, omit,
+  change or add actions (styled first, then the closure, then the group).
 - Tests: `ApprovalTest` (content, labels, fallback, plugin, floats, page language), `FilamentTest`
   (action, URL modal, crafted requests, table, download, verify, activity, tenancy, policy, strict
   authorization, int/ULID/UUID owners), `PseudoLocaleTest` (table, send modal, activity).
