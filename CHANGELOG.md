@@ -43,4 +43,5 @@ marked `@internal`.
   Dutch and Brazilian Portuguese (machine-assisted), including the default consent text. The
   pages follow the link's language (filament-public-links 0.2) and support right-to-left
   languages with logical CSS.
-- Requires `victorio/filament-public-links` `^0.2`.
+- Requires `victorio/filament-public-links` `^0.2` and `victorio/support` `^0.3` (its
+  `StringKeyedMorphMany`, `ModelKey` and pseudo-locale test helpers).

@@ -8,10 +8,10 @@ use Illuminate\Database\Eloquent\Model;
 use Victorio\Acceptance\Exceptions\EvidenceIsPermanent;
 use Victorio\Acceptance\Models\AuditEntry;
 use Victorio\Acceptance\Models\SealedVersion;
-use Victorio\Acceptance\Relations\StringKeyedMorphMany;
 use Victorio\Acceptance\Support\AcceptanceConfig;
-use Victorio\Acceptance\Support\ModelKey;
 use Victorio\Acceptance\Support\Sealer;
+use Victorio\Support\Database\ModelKey;
+use Victorio\Support\Database\StringKeyedMorphMany;
 
 /**
  * Gives any Eloquent model sealed versions, whatever its key type (int, ULID or UUID):

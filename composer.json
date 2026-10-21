@@ -29,7 +29,7 @@
         "illuminate/contracts": "^12.0|^13.0",
         "spatie/laravel-package-tools": "^1.16",
         "victorio/filament-public-links": "^0.2",
-        "victorio/support": "^0.2"
+        "victorio/support": "^0.3"
     },
     "require-dev": {
         "larastan/larastan": "^3.0",

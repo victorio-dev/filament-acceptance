@@ -7,7 +7,7 @@ namespace Victorio\Acceptance\Facades;
 use Illuminate\Database\Eloquent\Model;
 use Victorio\Acceptance\Data\ErasureReport;
 use Victorio\Acceptance\Support\Eraser;
-use Victorio\Acceptance\Support\ModelKey;
+use Victorio\Support\Database\ModelKey;
 
 /**
  * The deliberate, logged way to remove evidence when your own legal assessment requires it. The

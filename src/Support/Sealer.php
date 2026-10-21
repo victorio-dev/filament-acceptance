@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Crypt;
 use InvalidArgumentException;
 use Victorio\Acceptance\Events\VersionSealed;
 use Victorio\Acceptance\Models\SealedVersion;
+use Victorio\Support\Database\ModelKey;
 
 /**
  * Seals a subject's content as its next version (design.md b, "Sealing").

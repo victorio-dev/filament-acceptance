@@ -12,7 +12,7 @@ use Victorio\Acceptance\Builders\EvidenceBuilder;
 use Victorio\Acceptance\Exceptions\EvidenceIsImmutable;
 use Victorio\Acceptance\Exceptions\EvidenceIsPermanent;
 use Victorio\Acceptance\Support\AcceptanceConfig;
-use Victorio\Acceptance\Support\ModelKey;
+use Victorio\Support\Database\ModelKey;
 
 /**
  * What makes a model evidence: written once, never changed or deleted through Eloquent, never

@@ -11,6 +11,7 @@ use Victorio\Acceptance\Exceptions\AuditPropertyNotAllowed;
 use Victorio\Acceptance\Models\AuditEntry;
 use Victorio\Acceptance\Models\SealedVersion;
 use Victorio\PublicLinks\Support\IpHasher;
+use Victorio\Support\Database\ModelKey;
 
 /**
  * Writes the audit log (design.md b, "Audit log"). The package writes `sealed`, `accepted`,

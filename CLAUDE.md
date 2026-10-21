@@ -66,8 +66,8 @@ public-links' HMAC (`IpHasher`), never their own (E4, E5).
   The only way out is `Erasure` (explicit, logged); pruning spares the evidence chain.
   Immutability is enforced in the model and its builder; below Eloquent only `verify()` detects
   changes (design.md a, "What immutability covers").
-- `Relations\StringKeyedMorphMany` and `Support\ModelKey` are copies of the public-links ones;
-  they move to `support` before a third package needs them (docs/roadmap.md).
+- `StringKeyedMorphMany`, `ModelKey` and the pseudo-locale test helpers come from
+  `victorio/support` `^0.3` (no copies).
 - Canonical content contains integers only, never floats; any change to the canonical form is a
   breaking change and needs an ADR.
 

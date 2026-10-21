@@ -11,8 +11,8 @@ use function Pest\Laravel\post;
 use Victorio\Acceptance\Models\Decision;
 use Victorio\Acceptance\Tests\Fixtures\Handlers\TestDecisionHandler;
 use Victorio\Acceptance\Tests\Fixtures\IntSubject;
-use Victorio\Acceptance\Tests\Support\PseudoLocale;
 use Victorio\PublicLinks\Builders\PendingPublicLink;
+use Victorio\Support\Testing\PseudoLocale;
 
 /**
  * Every visible text of the decision pages comes from a translation key: with the pseudo locale
