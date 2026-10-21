@@ -204,8 +204,28 @@ Start at the top of this list and stop at the first step that does the job.
    logo, colour, footer, contact address).
 2. **Translations** — every user-facing string, in eight languages:
    `php artisan vendor:publish --tag="filament-acceptance-translations"`.
-3. **Your own handler** — for your own page content and behaviour (below).
-4. **Views — last resort.** `php artisan vendor:publish --tag="filament-acceptance-views"`.
+3. **Per-record consent text** — `approvalConsentText()` on the model replaces the checkbox text
+   of the built-in page for that record; null keeps the translation. The page asks for it in the
+   language the version was sent in, and stores exactly the text shown:
+
+   ```php
+   public function approvalConsentText(): ?string
+   {
+       return $this->brand === 'nordwind' ? __('offers.nordwind_consent') : null;
+   }
+   ```
+
+4. **Per-record handler** — `SendForApprovalAction` sends to the built-in page by default; give it
+   a purpose, fixed or per record, to send some records to your own handler (below) with the
+   same button, form and URL modal:
+
+   ```php
+   SendForApprovalAction::make()
+       ->purpose(fn (Offer $record): string => $record->is_brief ? 'brief' : 'approval');
+   ```
+
+5. **Your own handler** — for your own page content and behaviour (below).
+6. **Views — last resort.** `php artisan vendor:publish --tag="filament-acceptance-views"`.
 
    > A published view is a copy: it no longer receives the package's fixes and new features.
    > Re-check it after every upgrade, and prefer the steps above whenever they can do the job.
@@ -245,13 +265,17 @@ PublicLinks::handle(SealedVersion::class, 'quote', QuoteDecision::class, 'Quote'
 
 // Send it:
 $url = (new PendingPublicLink($version, 'quote'))->expiresIn(days: 30)->issue()->url;
+
+// Or from Filament: SendForApprovalAction::make()->purpose('quote') seals the approval fields
+// and sends them to this handler.
 ```
 
 - The page shows your content, the version's fingerprint and one form (name, e-mail, comment,
   consent checkbox) with an Accept and a Decline button, without JavaScript. Accept needs the
   name, e-mail and consent and stores the comment; Decline needs nothing, stores the comment as
-  the reason and first shows a confirmation page ("Yes, decline" or "Back", values kept). After the decision the link shows a read-only confirmation, with
-  a download of the evidence file if you stored one.
+  the reason and first shows a confirmation page ("Yes, decline" or "Back", values kept). After
+  the decision the link shows a read-only confirmation, with a download of the evidence file if
+  you stored one.
 - **Issue decision links without a usage limit.** A recorded decision spends one use; with
   `maxUses(1)` the confirmation page would answer 410. Two decisions are impossible anyway.
 - The consent text the customer saw is exactly what is stored with the acceptance; if it changes

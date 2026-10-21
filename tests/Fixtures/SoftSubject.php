@@ -22,4 +22,9 @@ final class SoftSubject extends Model
     protected $table = 'fixture_soft_subjects';
 
     protected $guarded = [];
+
+    public function approvalConsentText(): string
+    {
+        return 'I accept the terms of '.$this->name.'.';
+    }
 }

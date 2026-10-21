@@ -14,7 +14,9 @@ First release.
 - **Send for approval without code.** Say which fields of a model the customer sees — on the
   model (`approvalFields()`) or on the panel plugin (`AcceptancePlugin::approvable()`) — with a
   label per language. `SendForApprovalAction` seals the record in the chosen language and shows
-  a link to copy; the customer opens it without logging in and accepts or declines.
+  a link to copy; the customer opens it without logging in and accepts or declines. Per record,
+  `approvalConsentText()` gives the checkbox its own text and `->purpose()` sends the record to
+  your own handler.
 - **A public decision page.** One form (name, e-mail, comment, consent) with an Accept and a
   Decline button; declining asks for confirmation first. A read-only confirmation with the stored
   document follows, and clear pages explain a superseded or closed version. No JavaScript, labels and errors tied to their

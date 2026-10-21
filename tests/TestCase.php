@@ -20,6 +20,7 @@ abstract class TestCase extends Orchestra
 
         TestDecisionHandler::reset();
         Fixtures\Document::$withPrice = false;
+        Fixtures\Document::$consentTexts = [];
         PublicLinks::handle(SealedVersion::class, 'decide', TestDecisionHandler::class);
     }
 

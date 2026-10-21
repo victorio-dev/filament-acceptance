@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Victorio\Acceptance\Tests\Fixtures;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\App;
 use Victorio\Acceptance\Approval\ApprovalField;
 use Victorio\Acceptance\Concerns\HasSealedVersions;
 
@@ -32,6 +33,13 @@ final class Document extends Model
      */
     public static bool $withPrice = false;
 
+    /**
+     * approvalConsentText() per language; none gives null (the translation).
+     *
+     * @var array<string, string>
+     */
+    public static array $consentTexts = [];
+
     protected function casts(): array
     {
         return ['urgent' => 'boolean', 'due_on' => 'date', 'amount' => 'integer', 'price' => 'float'];
@@ -54,5 +62,10 @@ final class Document extends Model
     public function approvalTitle(): string
     {
         return $this->title;
+    }
+
+    public function approvalConsentText(): ?string
+    {
+        return self::$consentTexts[App::getLocale()] ?? null;
     }
 }

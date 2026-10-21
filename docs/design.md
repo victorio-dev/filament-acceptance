@@ -371,12 +371,18 @@ Blade components (anonymous, `filament-acceptance::components.*`, publishable wi
 - **`Http\ApprovalLinkHandler`** (registered for the version model under `approval.purpose`)
   renders those fields (escaped, multi-line text in paragraphs) and returns the snapshot's
   `locale` from `locale()`, so page, consent text and errors are in that language regardless of
-  `Accept-Language`.
-- **`Filament\Actions\SendForApprovalAction::make()`** returns a configured public-links
-  `IssuePublicLinkAction`: `fields(['expiry', 'locale'])`, `issueUsing()` seals the record
+  `Accept-Language`. Its `consentText()` asks the record (looked up without global scopes, so a
+  soft-deleted one too) for `approvalConsentText()` in that locale; null or blank keeps the
+  translation. The text is the record's current one, not sealed: the consent hash check catches
+  a change while the page is open (decided 2026-10-21).
+- **`Filament\Actions\SendForApprovalAction`** extends public-links' `IssuePublicLinkAction`
+  (not final from 0.2): `fields(['expiry', 'locale'])`, `issueUsing()` seals the record
   (`ApprovalContent::for($record, $locale)`) and issues a link to the version (no usage limit,
   the chosen expiry and locale), `linkOwnedUsing()` accepts only links to this record's versions.
-  Audit entry `sent`. Permission: `update` on the record (public-links' rule).
+  Audit entry `sent`. Permission: `update` on the record (public-links' rule). `purpose()`
+  (string, or a closure given the record) picks the link's purpose per record, so one button can
+  send to the built-in page or to a consumer's own `DecisionLinkHandler`; default
+  `approval.purpose`.
 - **`Filament\RelationManagers\DecisionsRelationManager`** on `sealedVersions` (tenant-scoped):
   version, sealed at, status badge (pending, accepted, declined, superseded), name, decided at,
   comment or reason, fingerprint; row actions download (hash-checked, else a notification) and

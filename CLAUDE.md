@@ -47,7 +47,8 @@ Everything listed here follows semver; everything else in `src/` is `@internal`.
 - `Http\DecisionLinkHandler` (abstract: `renderContent()`, `title()`, optional `isActionable()`,
   `consentText()`, `locale()`, `timezone()`, `transition()`), Blade components `styles`,
   `decision-forms`, `decision-summary`, `fingerprint`.
-- Approval without code: `Approval\ApprovalField`, `approvalFields()` / `approvalTitle()`,
+- Approval without code: `Approval\ApprovalField`, `approvalFields()` / `approvalTitle()` /
+  `approvalConsentText()`, `SendForApprovalAction::purpose()`,
   `AcceptancePlugin::approvable()`, `Http\ApprovalLinkHandler`; Filament
   `Actions\SendForApprovalAction`, `RelationManagers\DecisionsRelationManager`.
 - `Events\VersionSealed`, `Events\Decision{Recorded,Accepted,Declined}`, `Exceptions\*`; config and

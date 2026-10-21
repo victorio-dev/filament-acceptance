@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use function Pest\Laravel\get;
+use function Pest\Laravel\post;
 use function Pest\Laravel\withHeaders;
 
 use Victorio\Acceptance\AcceptancePlugin;
@@ -131,6 +132,52 @@ describe('the built-in decision page', function (): void {
 
         expect($decision->consent_text)->toBe($consent)
             ->and($decision->locale)->toBe('hu');
+    });
+
+    it('shows the record\'s own consent text in the version\'s language and stores exactly that', function (): void {
+        Document::$consentTexts = ['en' => 'I accept the Nordwind terms.', 'hu' => 'Elfogadom a Nordwind feltételeit.'];
+        ['path' => $path] = sentForApproval(sampleDocument(), 'hu');
+
+        withHeaders(['Accept-Language' => 'en'])->get($path)->assertOk()
+            ->assertSee('Elfogadom a Nordwind feltételeit.')
+            ->assertSee(hash('sha256', 'Elfogadom a Nordwind feltételeit.'))
+            ->assertDontSee('Elfogadom ezt a dokumentumot és a feltételeit.')
+            ->assertDontSee('I accept the Nordwind terms.');
+
+        withHeaders(['Accept-Language' => 'en'])
+            ->post($path.'/accept', acceptForm(['consent_hash' => hash('sha256', 'Elfogadom a Nordwind feltételeit.')]))
+            ->assertStatus(303);
+
+        expect(Decision::query()->sole()->consent_text)->toBe('Elfogadom a Nordwind feltételeit.');
+    });
+
+    it('refuses an acceptance of the translation once the record gives its own text', function (): void {
+        ['path' => $path] = sentForApproval(sampleDocument(), 'en');
+        Document::$consentTexts = ['en' => 'I accept the Nordwind terms.'];
+
+        post($path.'/accept', acceptForm())->assertStatus(303);
+
+        expect(Decision::query()->count())->toBe(0);
+        get($path)->assertSee('I accept the Nordwind terms.');
+    });
+
+    it('keeps the translation when the record gives none', function (): void {
+        Document::$consentTexts = ['de' => 'Ich akzeptiere die Nordwind-Bedingungen.'];
+        ['path' => $path] = sentForApproval(sampleDocument(), 'en');
+
+        get($path)->assertOk()->assertSee('I accept this document and its terms.')->assertDontSee('Nordwind');
+    });
+
+    it('asks a soft-deleted record for its consent text too', function (): void {
+        app(Victorio\Acceptance\Approval\Approvables::class)->register(SoftSubject::class, 'name', [
+            ApprovalField::make('name')->label(['en' => 'Name']),
+        ]);
+        $subject = SoftSubject::create(['name' => 'Nordwind']);
+        $version = $subject->seal(ApprovalContent::KIND, ApprovalContent::for($subject, 'en'));
+        $path = '/p/'.(new PendingPublicLink($version, 'approval'))->locale('en')->issue()->token;
+        $subject->delete();
+
+        get($path)->assertOk()->assertSee('I accept the terms of Nordwind.');
     });
 
     it('needs a new version for another language', function (): void {

@@ -133,6 +133,16 @@ trait HasSealedVersions
         return null;
     }
 
+    /**
+     * The consent checkbox text on the built-in approval page, instead of the translation; null
+     * keeps the translation. Called while the app locale is the version's language, so return it
+     * in App::getLocale(). Exactly the text shown is stored with an acceptance.
+     */
+    public function approvalConsentText(): ?string
+    {
+        return null;
+    }
+
     public function latestSealedVersion(): ?SealedVersion
     {
         return $this->sealedVersions()->first();

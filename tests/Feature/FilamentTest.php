@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
 use function Pest\Laravel\actingAs;
+use function Pest\Laravel\get;
 
 use Victorio\Acceptance\Approval\ApprovalContent;
 use Victorio\Acceptance\Facades\Decisions;
@@ -138,6 +139,51 @@ describe('SendForApprovalAction', function (): void {
         Livewire::test(EditDocument::class, ['record' => $document->getKey()])
             ->call('mountAction', 'sendForApproval', ['link' => $foreign->link->getKey()], ['filamentPublicLinksUrl' => true])
             ->assertMountedActionModalDontSee($foreign->url);
+    });
+
+    it('sends each record to the handler its purpose closure names', function (): void {
+        $urgent = Document::create(['title' => 'Urgent', 'body' => 'Terms.', 'urgent' => true]);
+        $calm = Document::create(['title' => 'Calm', 'body' => 'Terms.', 'urgent' => false]);
+
+        $send = function (Document $document): PublicLink {
+            $before = PublicLink::query()->pluck('id')->all();
+            $page = Livewire::test(EditDocument::class, ['record' => $document->getKey()])
+                ->callAction('sendByUrgency', data: ['expiry' => '7', 'locale' => 'en'])
+                ->assertHasNoErrors();
+            $link = PublicLink::query()->whereKeyNot($before)->sole();
+            $page->assertMountedActionModalSee((string) $link->url());
+
+            return $link;
+        };
+
+        $urgentLink = $send($urgent);
+        $calmLink = $send($calm);
+
+        expect($urgentLink->purpose)->toBe('decide')
+            ->and($calmLink->purpose)->toBe('approval');
+
+        get((string) $urgentLink->url())->assertOk()
+            ->assertSee('<div class="fixture-content">Urgent</div>', false)
+            ->assertSee('Document Urgent');
+        get((string) $calmLink->url())->assertOk()->assertSee('<h1>Calm</h1>', false);
+    });
+
+    it('takes a fixed purpose too', function (): void {
+        $document = approvalDocument();
+
+        Livewire::test(EditDocument::class, ['record' => $document->getKey()])
+            ->callAction('sendToDecide', data: ['expiry' => '7', 'locale' => 'en'])
+            ->assertHasNoErrors();
+
+        expect(PublicLink::query()->sole()->purpose)->toBe('decide');
+    });
+
+    it('refuses a purpose closure that gives no purpose', function (): void {
+        $document = approvalDocument();
+
+        expect(fn (): mixed => Livewire::test(EditDocument::class, ['record' => $document->getKey()])
+            ->callAction('sendNowhere', data: ['expiry' => '7', 'locale' => 'en']))
+            ->toThrow(UnexpectedValueException::class, 'must give a non-empty string');
     });
 
     it('needs update on the record', function (): void {
