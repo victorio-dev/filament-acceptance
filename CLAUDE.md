@@ -4,8 +4,8 @@ Global rules: ../CLAUDE.md
 
 Package-level notes. The global rules are not repeated here — read them first, then this file.
 Keep this file current: it is the context for every task in this package. The detailed plan is
-[docs/design.md](docs/design.md); status: **steps 1-4 of 5 done** (sealed versions, decisions, evidence files, audit log and
-retention, public decision pages), ADR-0010.
+[docs/design.md](docs/design.md); status: **steps 1-5 of 5 done** (sealed versions, decisions, evidence files, audit log,
+retention, public decision pages, Filament UI and approval without code), ADR-0010.
 
 ## Purpose
 
@@ -46,8 +46,10 @@ Everything listed here follows semver; everything else in `src/` is `@internal`.
   `Facades\Erasure::anonymize()|purge()`, `Data\ErasureReport`, command `filament-acceptance:erase`.
 - `Http\DecisionLinkHandler` (abstract: `renderContent()`, `title()`, optional `isActionable()`,
   `consentText()`, `locale()`, `timezone()`, `transition()`), Blade components `styles`,
-  `decision-forms`, `decision-summary`, `fingerprint`; later Filament `VerifySealedVersionAction`,
-  `AuditEntriesRelationManager`.
+  `decision-forms`, `decision-summary`, `fingerprint`.
+- Approval without code: `Approval\ApprovalField`, `approvalFields()` / `approvalTitle()`,
+  `AcceptancePlugin::approvable()`, `Http\ApprovalLinkHandler`; Filament
+  `Actions\SendForApprovalAction`, `RelationManagers\DecisionsRelationManager`.
 - `Events\VersionSealed`, `Events\Decision{Recorded,Accepted,Declined}`, `Exceptions\*`; config and
   translation keys.
 

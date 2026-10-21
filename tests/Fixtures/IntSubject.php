@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Victorio\Acceptance\Tests\Fixtures;
 
 use Illuminate\Database\Eloquent\Model;
+use Victorio\Acceptance\Approval\ApprovalField;
 use Victorio\Acceptance\Concerns\HasSealedVersions;
 
 /**
@@ -18,4 +19,12 @@ final class IntSubject extends Model
     protected $table = 'fixture_int_subjects';
 
     protected $guarded = [];
+
+    /**
+     * @return list<ApprovalField>
+     */
+    public function approvalFields(): array
+    {
+        return [ApprovalField::make('name')->label(['en' => 'Name', 'hu' => 'Név'])];
+    }
 }

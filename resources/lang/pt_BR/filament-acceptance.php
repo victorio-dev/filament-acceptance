@@ -73,4 +73,63 @@ return [
 
     'contact' => 'Dúvidas? Escreva para :email.',
 
+    'approval' => [
+        'yes' => 'Sim',
+        'no' => 'Não',
+        'purpose' => 'Aprovação',
+    ],
+
+    'filament' => [
+        'relation_manager' => [
+            'title' => 'Aprovações',
+            'empty' => 'Nada foi enviado para aprovação ainda.',
+        ],
+        'columns' => [
+            'version' => 'Versão',
+            'version_number' => 'v:number',
+            'sealed_at' => 'Selado',
+            'status' => 'Status',
+            'name' => 'Nome',
+            'decided_at' => 'Decidido',
+            'note' => 'Comentário ou motivo',
+            'fingerprint' => 'Impressão digital',
+        ],
+        'status' => [
+            'pending' => 'Aguardando decisão',
+            'accepted' => 'Aceito',
+            'declined' => 'Recusado',
+            'superseded' => 'Substituído',
+        ],
+        'actions' => [
+            'send' => [
+                'label' => 'Enviar para aprovação',
+            ],
+            'download' => [
+                'label' => 'Baixar documento',
+                'failed' => 'Não foi possível verificar o documento, por isso ele não foi baixado.',
+            ],
+            'verify' => [
+                'label' => 'Verificar',
+                'ok' => 'Íntegro: o conteúdo, a decisão e o documento correspondem aos seus hashes.',
+                'failed' => 'A verificação falhou: o conteúdo, a decisão ou o documento foram alterados.',
+            ],
+            'activity' => [
+                'label' => 'Atividade',
+                'heading' => 'Atividade',
+                'empty' => 'Ainda não há atividade.',
+                'time' => 'Horário',
+                'event' => 'Evento',
+                'close' => 'Fechar',
+            ],
+        ],
+        'events' => [
+            'sealed' => 'Selado',
+            'sent' => 'Enviado para aprovação',
+            'accepted' => 'Aceito',
+            'declined' => 'Recusado',
+            'evidence_stored' => 'Documento armazenado',
+            'erasure' => 'Apagado',
+        ],
+    ],
+
 ];

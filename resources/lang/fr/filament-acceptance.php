@@ -73,4 +73,63 @@ return [
 
     'contact' => 'Des questions ? Écrivez à :email.',
 
+    'approval' => [
+        'yes' => 'Oui',
+        'no' => 'Non',
+        'purpose' => 'Approbation',
+    ],
+
+    'filament' => [
+        'relation_manager' => [
+            'title' => 'Approbations',
+            'empty' => 'Rien n\'a encore été envoyé pour approbation.',
+        ],
+        'columns' => [
+            'version' => 'Version',
+            'version_number' => 'v:number',
+            'sealed_at' => 'Scellé',
+            'status' => 'Statut',
+            'name' => 'Nom',
+            'decided_at' => 'Décidé',
+            'note' => 'Commentaire ou motif',
+            'fingerprint' => 'Empreinte',
+        ],
+        'status' => [
+            'pending' => 'En attente de décision',
+            'accepted' => 'Accepté',
+            'declined' => 'Refusé',
+            'superseded' => 'Remplacé',
+        ],
+        'actions' => [
+            'send' => [
+                'label' => 'Envoyer pour approbation',
+            ],
+            'download' => [
+                'label' => 'Télécharger le document',
+                'failed' => 'Le document n\'a pas pu être vérifié, il n\'a donc pas été téléchargé.',
+            ],
+            'verify' => [
+                'label' => 'Vérifier',
+                'ok' => 'Intact : le contenu, la décision et le document correspondent à leurs empreintes.',
+                'failed' => 'Échec de la vérification : le contenu, la décision ou le document a été modifié.',
+            ],
+            'activity' => [
+                'label' => 'Activité',
+                'heading' => 'Activité',
+                'empty' => 'Aucune activité pour l\'instant.',
+                'time' => 'Heure',
+                'event' => 'Événement',
+                'close' => 'Fermer',
+            ],
+        ],
+        'events' => [
+            'sealed' => 'Scellé',
+            'sent' => 'Envoyé pour approbation',
+            'accepted' => 'Accepté',
+            'declined' => 'Refusé',
+            'evidence_stored' => 'Document enregistré',
+            'erasure' => 'Effacé',
+        ],
+    ],
+
 ];

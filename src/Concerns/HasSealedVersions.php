@@ -114,6 +114,25 @@ trait HasSealedVersions
         return $relation;
     }
 
+    /**
+     * The fields sealed when this record is sent for approval (SendForApprovalAction), unless
+     * AcceptancePlugin::approvable() configures the model. Override it in the model.
+     *
+     * @return list<\Victorio\Acceptance\Approval\ApprovalField>
+     */
+    public function approvalFields(): array
+    {
+        return [];
+    }
+
+    /**
+     * The heading of the approval page; null uses the model name and key.
+     */
+    public function approvalTitle(): ?string
+    {
+        return null;
+    }
+
     public function latestSealedVersion(): ?SealedVersion
     {
         return $this->sealedVersions()->first();

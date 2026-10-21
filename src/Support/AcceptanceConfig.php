@@ -86,6 +86,11 @@ final class AcceptanceConfig
         return self::int('evidence.user_agent_max_length', 255);
     }
 
+    public static function approvalPurpose(): string
+    {
+        return self::string('approval.purpose', 'approval');
+    }
+
     public static function maxCommentLength(): int
     {
         return self::int('decisions.max_comment_length', 2000);

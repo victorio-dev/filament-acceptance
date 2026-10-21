@@ -43,5 +43,14 @@ marked `@internal`.
   Dutch and Brazilian Portuguese (machine-assisted), including the default consent text. The
   pages follow the link's language (filament-public-links 0.2) and support right-to-left
   languages with logical CSS.
+- Approval without code: `ApprovalField` (text, multi-line, integer, boolean, date; a label per
+  language), `approvalFields()` / `approvalTitle()` on the model or
+  `AcceptancePlugin::approvable()`, and the built-in `ApprovalLinkHandler` (purpose
+  `approval.purpose`), which shows the sealed fields in the language they were sent in.
+- `Filament\Actions\SendForApprovalAction`: seals a record in the chosen language and issues a
+  decision link through public-links' `IssuePublicLinkAction` (expiry and language, no usage
+  limit), showing its URL.
+- `Filament\RelationManagers\DecisionsRelationManager`: versions, status, decision, fingerprint,
+  document download, verification, activity; permissions from the owner record's policy.
 - Requires `victorio/filament-public-links` `^0.2` and `victorio/support` `^0.3` (its
   `StringKeyedMorphMany`, `ModelKey` and pseudo-locale test helpers).

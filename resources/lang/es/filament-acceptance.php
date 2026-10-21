@@ -73,4 +73,63 @@ return [
 
     'contact' => '¿Preguntas? Escriba a :email.',
 
+    'approval' => [
+        'yes' => 'Sí',
+        'no' => 'No',
+        'purpose' => 'Aprobación',
+    ],
+
+    'filament' => [
+        'relation_manager' => [
+            'title' => 'Aprobaciones',
+            'empty' => 'Aún no se ha enviado nada para su aprobación.',
+        ],
+        'columns' => [
+            'version' => 'Versión',
+            'version_number' => 'v:number',
+            'sealed_at' => 'Sellado',
+            'status' => 'Estado',
+            'name' => 'Nombre',
+            'decided_at' => 'Decidido',
+            'note' => 'Comentario o motivo',
+            'fingerprint' => 'Huella',
+        ],
+        'status' => [
+            'pending' => 'Pendiente de decisión',
+            'accepted' => 'Aceptado',
+            'declined' => 'Rechazado',
+            'superseded' => 'Sustituido',
+        ],
+        'actions' => [
+            'send' => [
+                'label' => 'Enviar para aprobación',
+            ],
+            'download' => [
+                'label' => 'Descargar documento',
+                'failed' => 'No se pudo verificar el documento, por lo que no se descargó.',
+            ],
+            'verify' => [
+                'label' => 'Verificar',
+                'ok' => 'Intacto: el contenido, la decisión y el documento coinciden con sus hashes.',
+                'failed' => 'La verificación falló: se modificó el contenido, la decisión o el documento.',
+            ],
+            'activity' => [
+                'label' => 'Actividad',
+                'heading' => 'Actividad',
+                'empty' => 'Todavía no hay actividad.',
+                'time' => 'Hora',
+                'event' => 'Evento',
+                'close' => 'Cerrar',
+            ],
+        ],
+        'events' => [
+            'sealed' => 'Sellado',
+            'sent' => 'Enviado para aprobación',
+            'accepted' => 'Aceptado',
+            'declined' => 'Rechazado',
+            'evidence_stored' => 'Documento guardado',
+            'erasure' => 'Borrado',
+        ],
+    ],
+
 ];

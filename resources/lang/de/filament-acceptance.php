@@ -73,4 +73,63 @@ return [
 
     'contact' => 'Fragen? Schreiben Sie an :email.',
 
+    'approval' => [
+        'yes' => 'Ja',
+        'no' => 'Nein',
+        'purpose' => 'Freigabe',
+    ],
+
+    'filament' => [
+        'relation_manager' => [
+            'title' => 'Freigaben',
+            'empty' => 'Noch nichts zur Freigabe gesendet.',
+        ],
+        'columns' => [
+            'version' => 'Version',
+            'version_number' => 'v:number',
+            'sealed_at' => 'Versiegelt',
+            'status' => 'Status',
+            'name' => 'Name',
+            'decided_at' => 'Entschieden',
+            'note' => 'Kommentar oder Grund',
+            'fingerprint' => 'Fingerabdruck',
+        ],
+        'status' => [
+            'pending' => 'Wartet auf Entscheidung',
+            'accepted' => 'Angenommen',
+            'declined' => 'Abgelehnt',
+            'superseded' => 'Ersetzt',
+        ],
+        'actions' => [
+            'send' => [
+                'label' => 'Zur Freigabe senden',
+            ],
+            'download' => [
+                'label' => 'Dokument herunterladen',
+                'failed' => 'Das Dokument konnte nicht geprüft werden und wurde daher nicht heruntergeladen.',
+            ],
+            'verify' => [
+                'label' => 'Prüfen',
+                'ok' => 'Unverändert: Inhalt, Entscheidung und Dokument stimmen mit ihren Hashes überein.',
+                'failed' => 'Prüfung fehlgeschlagen: Inhalt, Entscheidung oder Dokument wurden verändert.',
+            ],
+            'activity' => [
+                'label' => 'Verlauf',
+                'heading' => 'Verlauf',
+                'empty' => 'Noch keine Einträge.',
+                'time' => 'Zeit',
+                'event' => 'Ereignis',
+                'close' => 'Schließen',
+            ],
+        ],
+        'events' => [
+            'sealed' => 'Versiegelt',
+            'sent' => 'Zur Freigabe gesendet',
+            'accepted' => 'Angenommen',
+            'declined' => 'Abgelehnt',
+            'evidence_stored' => 'Dokument gespeichert',
+            'erasure' => 'Gelöscht',
+        ],
+    ],
+
 ];

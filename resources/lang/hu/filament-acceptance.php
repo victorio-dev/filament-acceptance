@@ -73,4 +73,63 @@ return [
 
     'contact' => 'Kérdése van? Írjon ide: :email.',
 
+    'approval' => [
+        'yes' => 'Igen',
+        'no' => 'Nem',
+        'purpose' => 'Jóváhagyás',
+    ],
+
+    'filament' => [
+        'relation_manager' => [
+            'title' => 'Jóváhagyások',
+            'empty' => 'Még semmit sem küldtek jóváhagyásra.',
+        ],
+        'columns' => [
+            'version' => 'Változat',
+            'version_number' => ':number. változat',
+            'sealed_at' => 'Lezárva',
+            'status' => 'Állapot',
+            'name' => 'Név',
+            'decided_at' => 'Döntés ideje',
+            'note' => 'Megjegyzés vagy indok',
+            'fingerprint' => 'Ujjlenyomat',
+        ],
+        'status' => [
+            'pending' => 'Döntésre vár',
+            'accepted' => 'Elfogadva',
+            'declined' => 'Elutasítva',
+            'superseded' => 'Felülírva',
+        ],
+        'actions' => [
+            'send' => [
+                'label' => 'Jóváhagyásra küldés',
+            ],
+            'download' => [
+                'label' => 'Dokumentum letöltése',
+                'failed' => 'A dokumentumot nem sikerült ellenőrizni, ezért nem töltöttük le.',
+            ],
+            'verify' => [
+                'label' => 'Ellenőrzés',
+                'ok' => 'Sértetlen: a tartalom, a döntés és a dokumentum egyezik a hash-ével.',
+                'failed' => 'Az ellenőrzés sikertelen: a tartalom, a döntés vagy a dokumentum megváltozott.',
+            ],
+            'activity' => [
+                'label' => 'Napló',
+                'heading' => 'Napló',
+                'empty' => 'Még nincs bejegyzés.',
+                'time' => 'Időpont',
+                'event' => 'Esemény',
+                'close' => 'Bezárás',
+            ],
+        ],
+        'events' => [
+            'sealed' => 'Lezárva',
+            'sent' => 'Jóváhagyásra küldve',
+            'accepted' => 'Elfogadva',
+            'declined' => 'Elutasítva',
+            'evidence_stored' => 'Dokumentum tárolva',
+            'erasure' => 'Törölve',
+        ],
+    ],
+
 ];

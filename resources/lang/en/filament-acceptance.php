@@ -73,4 +73,63 @@ return [
 
     'contact' => 'Questions? Write to :email.',
 
+    'approval' => [
+        'yes' => 'Yes',
+        'no' => 'No',
+        'purpose' => 'Approval',
+    ],
+
+    'filament' => [
+        'relation_manager' => [
+            'title' => 'Approvals',
+            'empty' => 'Nothing sent for approval yet.',
+        ],
+        'columns' => [
+            'version' => 'Version',
+            'version_number' => 'v:number',
+            'sealed_at' => 'Sealed',
+            'status' => 'Status',
+            'name' => 'Name',
+            'decided_at' => 'Decided',
+            'note' => 'Comment or reason',
+            'fingerprint' => 'Fingerprint',
+        ],
+        'status' => [
+            'pending' => 'Awaiting decision',
+            'accepted' => 'Accepted',
+            'declined' => 'Declined',
+            'superseded' => 'Superseded',
+        ],
+        'actions' => [
+            'send' => [
+                'label' => 'Send for approval',
+            ],
+            'download' => [
+                'label' => 'Download document',
+                'failed' => 'The document could not be verified, so it was not downloaded.',
+            ],
+            'verify' => [
+                'label' => 'Verify',
+                'ok' => 'Intact: the content, the decision and the document match their hashes.',
+                'failed' => 'Verification failed: the content, the decision or the document was changed.',
+            ],
+            'activity' => [
+                'label' => 'Activity',
+                'heading' => 'Activity',
+                'empty' => 'No activity yet.',
+                'time' => 'Time',
+                'event' => 'Event',
+                'close' => 'Close',
+            ],
+        ],
+        'events' => [
+            'sealed' => 'Sealed',
+            'sent' => 'Sent for approval',
+            'accepted' => 'Accepted',
+            'declined' => 'Declined',
+            'evidence_stored' => 'Document stored',
+            'erasure' => 'Erased',
+        ],
+    ],
+
 ];

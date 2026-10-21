@@ -73,4 +73,63 @@ return [
 
     'contact' => 'Domande? Scrivi a :email.',
 
+    'approval' => [
+        'yes' => 'Sì',
+        'no' => 'No',
+        'purpose' => 'Approvazione',
+    ],
+
+    'filament' => [
+        'relation_manager' => [
+            'title' => 'Approvazioni',
+            'empty' => 'Nulla è stato ancora inviato per approvazione.',
+        ],
+        'columns' => [
+            'version' => 'Versione',
+            'version_number' => 'v:number',
+            'sealed_at' => 'Sigillato',
+            'status' => 'Stato',
+            'name' => 'Nome',
+            'decided_at' => 'Deciso',
+            'note' => 'Commento o motivo',
+            'fingerprint' => 'Impronta',
+        ],
+        'status' => [
+            'pending' => 'In attesa di decisione',
+            'accepted' => 'Accettato',
+            'declined' => 'Rifiutato',
+            'superseded' => 'Sostituito',
+        ],
+        'actions' => [
+            'send' => [
+                'label' => 'Invia per approvazione',
+            ],
+            'download' => [
+                'label' => 'Scarica documento',
+                'failed' => 'Non è stato possibile verificare il documento, quindi non è stato scaricato.',
+            ],
+            'verify' => [
+                'label' => 'Verifica',
+                'ok' => 'Integro: contenuto, decisione e documento corrispondono ai loro hash.',
+                'failed' => 'Verifica non riuscita: il contenuto, la decisione o il documento sono stati modificati.',
+            ],
+            'activity' => [
+                'label' => 'Attività',
+                'heading' => 'Attività',
+                'empty' => 'Ancora nessuna attività.',
+                'time' => 'Ora',
+                'event' => 'Evento',
+                'close' => 'Chiudi',
+            ],
+        ],
+        'events' => [
+            'sealed' => 'Sigillato',
+            'sent' => 'Inviato per approvazione',
+            'accepted' => 'Accettato',
+            'declined' => 'Rifiutato',
+            'evidence_stored' => 'Documento salvato',
+            'erasure' => 'Cancellato',
+        ],
+    ],
+
 ];

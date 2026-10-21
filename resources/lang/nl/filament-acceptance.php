@@ -73,4 +73,63 @@ return [
 
     'contact' => 'Vragen? Schrijf naar :email.',
 
+    'approval' => [
+        'yes' => 'Ja',
+        'no' => 'Nee',
+        'purpose' => 'Goedkeuring',
+    ],
+
+    'filament' => [
+        'relation_manager' => [
+            'title' => 'Goedkeuringen',
+            'empty' => 'Nog niets ter goedkeuring verstuurd.',
+        ],
+        'columns' => [
+            'version' => 'Versie',
+            'version_number' => 'v:number',
+            'sealed_at' => 'Verzegeld',
+            'status' => 'Status',
+            'name' => 'Naam',
+            'decided_at' => 'Besloten',
+            'note' => 'Opmerking of reden',
+            'fingerprint' => 'Vingerafdruk',
+        ],
+        'status' => [
+            'pending' => 'Wacht op beslissing',
+            'accepted' => 'Geaccepteerd',
+            'declined' => 'Geweigerd',
+            'superseded' => 'Vervangen',
+        ],
+        'actions' => [
+            'send' => [
+                'label' => 'Ter goedkeuring versturen',
+            ],
+            'download' => [
+                'label' => 'Document downloaden',
+                'failed' => 'Het document kon niet worden gecontroleerd en is daarom niet gedownload.',
+            ],
+            'verify' => [
+                'label' => 'Controleren',
+                'ok' => 'Ongewijzigd: inhoud, beslissing en document komen overeen met hun hashes.',
+                'failed' => 'Controle mislukt: de inhoud, de beslissing of het document is gewijzigd.',
+            ],
+            'activity' => [
+                'label' => 'Activiteit',
+                'heading' => 'Activiteit',
+                'empty' => 'Nog geen activiteit.',
+                'time' => 'Tijd',
+                'event' => 'Gebeurtenis',
+                'close' => 'Sluiten',
+            ],
+        ],
+        'events' => [
+            'sealed' => 'Verzegeld',
+            'sent' => 'Ter goedkeuring verstuurd',
+            'accepted' => 'Geaccepteerd',
+            'declined' => 'Geweigerd',
+            'evidence_stored' => 'Document opgeslagen',
+            'erasure' => 'Gewist',
+        ],
+    ],
+
 ];

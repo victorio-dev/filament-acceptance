@@ -6,6 +6,7 @@ namespace Victorio\Acceptance\Tests\Fixtures;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
+use Victorio\Acceptance\Approval\ApprovalField;
 use Victorio\Acceptance\Concerns\HasSealedVersions;
 
 /**
@@ -20,4 +21,12 @@ final class UuidSubject extends Model
     protected $table = 'fixture_uuid_subjects';
 
     protected $guarded = [];
+
+    /**
+     * @return list<ApprovalField>
+     */
+    public function approvalFields(): array
+    {
+        return [ApprovalField::make('name')->label(['en' => 'Name', 'hu' => 'Név'])];
+    }
 }

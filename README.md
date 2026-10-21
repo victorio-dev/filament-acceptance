@@ -3,8 +3,7 @@
 Sealed, tamper-evident document versions and provable accept or decline decisions for Filament,
 on top of [victorio/filament-public-links](https://github.com/victorio-dev/filament-public-links).
 
-> **Status: in development, not released.** Sealed versions, the canonical JSON, decisions,
-> evidence files, the audit log and the public decision pages exist; the Filament parts follow
+> **Status: in development, not released**
 > ([docs/design.md](https://github.com/victorio-dev/filament-acceptance/blob/main/docs/design.md)).
 
 - Requires PHP `^8.3`, Laravel `^12.0|^13.0`, Filament `^4.0|^5.0`
@@ -13,6 +12,80 @@ on top of [victorio/filament-public-links](https://github.com/victorio-dev/filam
 
 A decision recorded by this package is a simple electronic signature under eIDAS, not an advanced
 or qualified electronic signature.
+
+## Quick start — no code to write
+
+Send any record for approval from Filament: the customer opens a link without logging in,
+reads the record's fields and accepts or declines. Three steps, no handler, no view:
+
+**1. The model** says which fields the customer sees, with a label per language:
+
+```php
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Victorio\Acceptance\Approval\ApprovalField;
+use Victorio\Acceptance\Concerns\HasSealedVersions;
+
+class Offer extends Model
+{
+    use HasSealedVersions;
+    use SoftDeletes;   // recommended: a sealed record can be soft deleted, never force deleted
+
+    public function approvalTitle(): ?string
+    {
+        return $this->title;
+    }
+
+    public function approvalFields(): array
+    {
+        return [
+            ApprovalField::make('body')->multiline()->label(['en' => 'Offer', 'hu' => 'Ajánlat']),
+            ApprovalField::make('price_eur')->integer()->label(['en' => 'Price (EUR)', 'hu' => 'Ár (EUR)']),
+            ApprovalField::make('valid_until')->date()->label(['en' => 'Valid until', 'hu' => 'Érvényes']),
+        ];
+    }
+}
+```
+
+Or keep the model untouched and say it on the panel plugin, which wins over the model:
+
+```php
+use Victorio\Acceptance\AcceptancePlugin;
+use Victorio\Acceptance\Approval\ApprovalField;
+
+$panel->plugins([
+    AcceptancePlugin::make()->approvable(Offer::class, title: 'title', fields: [
+        ApprovalField::make('body')->multiline()->label(['en' => 'Offer', 'hu' => 'Ajánlat']),
+    ]),
+]);
+```
+
+**2. The resource** gets the decisions table, which has a "Send for approval" button:
+
+```php
+use Victorio\Acceptance\Filament\RelationManagers\DecisionsRelationManager;
+
+public static function getRelations(): array
+{
+    return [DecisionsRelationManager::class];
+}
+```
+
+`SendForApprovalAction::make()` also works on its own, as a page or table row action.
+
+**3. Send it.** The action asks for the expiry and the language, seals the record's fields in
+that language and shows the link (no usage limit) to copy. The customer's page, the consent text
+and the error messages are in that language, whatever their browser says; sending in another
+language seals a new version. The table shows each version's status (awaiting decision,
+accepted, declined, superseded), who decided when, the comment or reason, the fingerprint, the
+stored document, a verify button and the activity. Seeing it needs `view` on the record, sending
+needs `update` — the record's own policy, as for public links.
+
+Values are text, multi-line text, integers, booleans or dates; a float is refused (sealed content
+holds no floats — store money in minor units, or as a decimal string with `text()`).
+
+Need more than fields — your own layout, a status change on acceptance? Write a handler
+([below](#the-public-decision-page)).
 
 ## Sealed versions
 

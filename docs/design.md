@@ -1,7 +1,7 @@
 # filament-acceptance — design
 
-Status: **approved** 2026-10-21; steps 1-4 done (sealed versions; decisions and evidence files;
-audit log and retention; public decision pages). The short version lives in [../CLAUDE.md](../CLAUDE.md); this
+Status: **approved** 2026-10-21; steps 1-5 done (sealed versions; decisions and evidence files;
+audit log and retention; public decision pages; Filament and approval without code). The short version lives in [../CLAUDE.md](../CLAUDE.md); this
 file is the detailed plan. No code exists yet. Decided in [ADR-0010](../../docs/decisions.md).
 
 ## 0. Purpose and boundaries
@@ -356,13 +356,34 @@ Blade components (anonymous, `filament-acceptance::components.*`, publishable wi
 :consent-text :consent-hash />`, `<x-filament-acceptance::decision-summary :decision :decided-at
 :evidence-action />`, `<x-filament-acceptance::fingerprint :version />`.
 
-### Filament building blocks
+### Filament building blocks and approval without code (step 5)
 
-- `Filament\Actions\VerifySealedVersionAction` — runs `verify()` (content hash, decision hash,
-  evidence file hash) and shows the result.
-- `Filament\RelationManagers\AuditEntriesRelationManager` — the timeline of a subject using
-  `HasSealedVersions` (time, event, causer, version); tenant-scoped.
-- A decision infolist entry for the version views of the consumers.
+- **Approval fields.** `Approval\ApprovalField::make($attribute)` with a type (`text`,
+  `multiline`, `integer`, `boolean`, `date`) and a label per locale (array, English fallback) or
+  a translation key. A model lists them in `approvalFields()` (and its heading in
+  `approvalTitle()`), or `AcceptancePlugin::approvable($model, fields, title)` sets them and wins.
+- **Sealed content** (`Approval\ApprovalContent`, kind `approval`): `locale`, `title`, and per
+  field `key`, `type`, `value` and the label **in that locale only** (decided 2026-10-21). The
+  page needs no configuration, and a later config change never alters a sent version. Another
+  language = another sealed version.
+- **`Http\ApprovalLinkHandler`** (registered for the version model under `approval.purpose`)
+  renders those fields (escaped, multi-line text in paragraphs) and returns the snapshot's
+  `locale` from `locale()`, so page, consent text and errors are in that language regardless of
+  `Accept-Language`.
+- **`Filament\Actions\SendForApprovalAction::make()`** returns a configured public-links
+  `IssuePublicLinkAction`: `fields(['expiry', 'locale'])`, `issueUsing()` seals the record
+  (`ApprovalContent::for($record, $locale)`) and issues a link to the version (no usage limit,
+  the chosen expiry and locale), `linkOwnedUsing()` accepts only links to this record's versions.
+  Audit entry `sent`. Permission: `update` on the record (public-links' rule).
+- **`Filament\RelationManagers\DecisionsRelationManager`** on `sealedVersions` (tenant-scoped):
+  version, sealed at, status badge (pending, accepted, declined, superseded), name, decided at,
+  comment or reason, fingerprint; row actions download (hash-checked, else a notification) and
+  verify; header actions send for approval and activity (slide-over, last 50 audit entries);
+  refreshes on public-links' `LINKS_CHANGED`. `view` to see, `update` to send; no policy → allowed
+  unless `strictAuthorization()`.
+- Tests: `ApprovalTest` (content, labels, fallback, plugin, floats, page language), `FilamentTest`
+  (action, URL modal, crafted requests, table, download, verify, activity, tenancy, policy, strict
+  authorization, int/ULID/UUID owners), `PseudoLocaleTest` (table, send modal, activity).
 
 ### Events
 

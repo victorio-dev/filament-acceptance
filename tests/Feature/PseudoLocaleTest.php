@@ -100,3 +100,65 @@ it('has no hard-coded text on the superseded and the unverifiable pages', functi
     expect(PseudoLocale::untranslated($superseded, decisionData($version)))->toBe([])
         ->and(PseudoLocale::untranslated($unverifiable, decisionData($version)))->toBe([]);
 });
+
+describe('in Filament', function (): void {
+    beforeEach(function (): void {
+        Filament\Facades\Filament::setCurrentPanel(Filament\Facades\Filament::getPanel('admin'));
+        Pest\Laravel\actingAs(Victorio\Acceptance\Tests\Fixtures\User::create(['name' => 'Admin']));
+    });
+
+    /**
+     * Data in the admin pages: the record, the decision, fingerprints, dates (Carbon, admin
+     * locale), locale names (intl).
+     *
+     * @param  list<Victorio\Acceptance\Models\SealedVersion>  $versions
+     * @return list<string>
+     */
+    function approvalAdminData(array $versions): array
+    {
+        $dates = [];
+
+        foreach (Victorio\Acceptance\Models\SealedVersion::query()->get() as $version) {
+            $dates[] = Carbon\CarbonImmutable::instance($version->sealed_at)->isoFormat('LLL');
+        }
+
+        foreach (Decision::query()->get() as $decision) {
+            $dates[] = Carbon\CarbonImmutable::instance($decision->decided_at)->isoFormat('LLL');
+        }
+
+        foreach (Victorio\Acceptance\Models\AuditEntry::query()->get() as $entry) {
+            $dates[] = Carbon\CarbonImmutable::instance($entry->occurred_at)->isoFormat('LLL');
+        }
+
+        return [
+            (string) config('app.name'), 'Website redesign', 'Anna Kovács', 'Looking forward to it.', 'Admin',
+            ...array_map(static fn ($version): string => substr($version->content_hash, 0, 12), $versions),
+            ...$dates,
+            'Deutsch', 'English', 'Español', 'Français', 'Italiano', 'Magyar', 'Nederlands', 'Português (Brasil)',
+        ];
+    }
+
+    it('has no hard-coded text in the decisions table, the send modal and the activity', function (): void {
+        $document = Victorio\Acceptance\Tests\Fixtures\Document::create(['title' => 'Website redesign', 'body' => 'Terms.']);
+        $first = $document->seal(Victorio\Acceptance\Approval\ApprovalContent::KIND, Victorio\Acceptance\Approval\ApprovalContent::for($document, 'en'));
+        $second = $document->seal(Victorio\Acceptance\Approval\ApprovalContent::KIND, Victorio\Acceptance\Approval\ApprovalContent::for($document, 'en'));
+        Victorio\Acceptance\Facades\Decisions::record($second, acceptance(), visitorRequest());
+
+        $component = Livewire\Livewire::test(Victorio\Acceptance\Filament\RelationManagers\DecisionsRelationManager::class, [
+            'ownerRecord' => $document,
+            'pageClass' => Victorio\Acceptance\Tests\Fixtures\Filament\Pages\EditDocument::class,
+        ]);
+        $allowed = approvalAdminData([$first, $second]);
+
+        expect(PseudoLocale::untranslated($component->html(), $allowed))->toBe([])
+            ->and($component->html())->toContain('⟦')
+            ->and(PseudoLocale::untranslated($component->mountTableAction('sendForApproval')->html(), $allowed))->toBe([]);
+
+        $activity = Livewire\Livewire::test(Victorio\Acceptance\Filament\RelationManagers\DecisionsRelationManager::class, [
+            'ownerRecord' => $document,
+            'pageClass' => Victorio\Acceptance\Tests\Fixtures\Filament\Pages\EditDocument::class,
+        ])->mountTableAction('viewActivity');
+
+        expect(PseudoLocale::untranslated($activity->html(), $allowed))->toBe([]);
+    });
+});

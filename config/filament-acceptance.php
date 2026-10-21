@@ -94,4 +94,18 @@ return [
         'max_reason_length' => 2000,
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Approval without code
+    |--------------------------------------------------------------------------
+    |
+    | The public-links purpose under which SendForApprovalAction issues its
+    | links and the built-in ApprovalLinkHandler answers them.
+    |
+    */
+
+    'approval' => [
+        'purpose' => 'approval',
+    ],
+
 ];

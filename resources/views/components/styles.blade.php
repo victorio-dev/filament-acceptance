@@ -4,6 +4,9 @@
 --}}
 <style>
     .fa-content { margin: 0 0 1.5rem; overflow-wrap: anywhere; }
+    .fa-approval dt { font-weight: 600; margin: 0; }
+    .fa-approval dd { margin: 0 0 1rem; }
+    .fa-approval dd p { margin: 0 0 .5rem; }
     .fa-fingerprint { color: var(--fpl-muted); font-size: .875rem; margin: 0 0 1.5rem; }
     .fa-fingerprint code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
     .fa-notice { padding: .75rem 1rem; border-inline-start: 4px solid var(--fpl-primary); background: var(--fpl-surface); margin: 0 0 1.5rem; }

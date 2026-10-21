@@ -19,6 +19,7 @@ abstract class TestCase extends Orchestra
         parent::setUp();
 
         TestDecisionHandler::reset();
+        Fixtures\Document::$withPrice = false;
         PublicLinks::handle(SealedVersion::class, 'decide', TestDecisionHandler::class);
     }
 
@@ -62,6 +63,7 @@ abstract class TestCase extends Orchestra
     {
         // The internal part of a sealed version is encrypted with the app key.
         $app['config']->set('app.key', 'base64:'.base64_encode(str_repeat('k', 32)));
+        $app['config']->set('auth.providers.users.model', Fixtures\User::class);
 
         // DB_CONNECTION=mysql|pgsql (`make test DB=...`, CI) keeps Testbench's own connection of
         // that name, whose config file reads DB_HOST, DB_DATABASE and friends. Without it
