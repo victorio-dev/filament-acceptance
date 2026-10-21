@@ -38,5 +38,9 @@ marked `@internal`.
   optional `isActionable()`, `consentText()`, `locale()`, `timezone()`, `transition()`) with
   accept and decline forms, post/redirect/get, a read-only confirmation with the evidence
   download, a page for superseded versions, and the Blade components `styles`,
-  `decision-forms`, `decision-summary`, `fingerprint`. English and Hungarian.
+  `decision-forms`, `decision-summary`, `fingerprint`.
+- Eight languages: English and Hungarian (checked by hand), German, Spanish, French, Italian,
+  Dutch and Brazilian Portuguese (machine-assisted), including the default consent text. The
+  pages follow the link's language (filament-public-links 0.2) and support right-to-left
+  languages with logical CSS.
 - Requires `victorio/filament-public-links` `^0.2`.

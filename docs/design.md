@@ -319,7 +319,8 @@ PublicLinks::handle(SealedVersion::class, 'quote', QuoteLinkHandler::class, 'Quo
   the hashes match, so the decision stores exactly the text the visitor saw — never text from
   the client. If it changed in between, the form comes back with an error.
 - **Language:** `locale()` (default: the app locale) is set for the page, its validation
-  messages (the package's own, en/hu, independent of the host's validation translations) and the
+  messages (the package's own, in the eight shipped languages, independent of the host's
+  validation translations) and the
   stored decision.
 
 | Situation | Answer |
@@ -338,6 +339,12 @@ The redirect target is the request URL without its action segment: the pages sen
 `Referrer-Policy: no-referrer`, so `back()` has nothing to go on. The token appears in the HTML
 only in form actions. The contact address comes from public-links' branding (its configured
 `BrandingResolver`, so per-tenant brands work).
+
+Languages: en and hu (checked by hand), de, es, fr, it, nl, pt_BR (machine-assisted, the
+consent text and legal note included; the README asks buyers to have those reviewed). The
+language is public-links' (link locale → Accept-Language → app) unless `locale()` says
+otherwise; `dir="rtl"` comes from the public-links layout, the decision styles use logical
+properties. `TranslationsTest` and `PseudoLocaleTest` guard keys and hard-coded text.
 
 Accessibility: a label for every field; errors tied with `aria-invalid` + `aria-describedby`, a
 `role="alert"` summary, `autofocus` on the first invalid field (no JavaScript); real submit

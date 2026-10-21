@@ -61,6 +61,7 @@ public-links' HMAC (`IpHasher`), never their own (E4, E5).
 ## Conventions specific to this package
 
 - MIT, public repository, like public-links; its API is public from 0.1, so semver matters.
+- Eight languages; the consent text and legal note are legal in nature (README: have them reviewed).
 - Evidence (versions, decisions, evidence files) is never deleted by the package; tests pin it.
   The only way out is `Erasure` (explicit, logged); pruning spares the evidence chain.
   Immutability is enforced in the model and its builder; below Eloquent only `verify()` detects

@@ -6,7 +6,7 @@
     .fa-content { margin: 0 0 1.5rem; overflow-wrap: anywhere; }
     .fa-fingerprint { color: var(--fpl-muted); font-size: .875rem; margin: 0 0 1.5rem; }
     .fa-fingerprint code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-    .fa-notice { padding: .75rem 1rem; border-left: 4px solid var(--fpl-primary); background: var(--fpl-surface); margin: 0 0 1.5rem; }
+    .fa-notice { padding: .75rem 1rem; border-inline-start: 4px solid var(--fpl-primary); background: var(--fpl-surface); margin: 0 0 1.5rem; }
     .fa-panel { border: 1px solid var(--fpl-border); border-radius: .5rem; padding: 1.25rem; margin: 0 0 1.5rem; background: var(--fpl-surface); }
     .fa-panel h2 { font-size: 1.15rem; margin: 0 0 1rem; }
     .fa-field { margin: 0 0 1rem; }

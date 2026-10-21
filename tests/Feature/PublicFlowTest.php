@@ -396,3 +396,23 @@ it('sends the privacy headers on every page', function (): void {
     $subject->seal('quote', ['title' => 'v2']);
     assertPrivacyHeaders(get($path));                                   // superseded, 410
 });
+
+it('writes right-to-left languages right to left, with logical CSS', function (): void {
+    TestDecisionHandler::$locale = 'ar';
+    ['path' => $path] = decisionLink();
+
+    get($path)->assertOk()
+        ->assertSee('<html lang="ar" dir="rtl">', false)
+        ->assertSee('border-inline-start', false)
+        ->assertDontSee('border-left', false);
+});
+
+it('shows the page in each shipped language', function (string $locale, string $button): void {
+    TestDecisionHandler::$locale = $locale;
+    ['path' => $path] = decisionLink();
+
+    get($path)->assertOk()->assertSee($button)->assertSee('<html lang="'.str_replace('_', '-', $locale).'"', false);
+})->with([
+    ['en', 'Accept'], ['hu', 'Elfogadom'], ['de', 'Annehmen'], ['es', 'Acepto'], ['fr', "J'accepte"],
+    ['it', 'Accetto'], ['nl', 'Ik accepteer'], ['pt_BR', 'Aceito'],
+]);

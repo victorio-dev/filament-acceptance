@@ -151,9 +151,23 @@ $url = (new PendingPublicLink($version, 'quote'))->expiresIn(days: 30)->issue()-
   while the page is open, the customer is asked to confirm again.
 - A superseded version explains that a newer one was prepared, with your contact address
   (public-links' `branding.contact_email`).
-- English and Hungarian; labels, error messages tied to their fields, 44 px buttons, no
-  JavaScript. Restyle through public-links' branding; the views are publishable
+- Eight languages (below); labels, error messages tied to their fields, 44 px buttons, no
+  JavaScript, right-to-left languages supported. Restyle through public-links' branding; the views are publishable
   (`filament-acceptance-views`) as a last resort.
+
+## Languages
+
+The pages ship in English and Hungarian, checked by hand, and in German, Spanish, French,
+Italian, Dutch and Brazilian Portuguese, machine-assisted — corrections are welcome. They are
+shown in the link's language (`->locale()` when issuing it), else the visitor's browser
+language, else your app's; `locale()` on your handler overrides it.
+
+> **Have the consent text and the legal note reviewed in your own language.** The checkbox
+> label ("I accept this document and its terms.") and the note that the confirmation is a
+> simple electronic declaration, not a qualified electronic signature, are legal in nature. The
+> machine-assisted translations are a starting point, not legal wording: override
+> `consentText()` or publish the translations
+> (`php artisan vendor:publish --tag="filament-acceptance-translations"`) and have them checked.
 
 ## Retention and erasure
 
