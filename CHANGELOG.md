@@ -25,4 +25,13 @@ marked `@internal`.
   the access row of the request.
 - Evidence files: `Decision::storeEvidence()`, `evidenceContents()`, `verifyEvidence()` — stored
   once on the configured disk with their SHA-256, never deleted.
+- Audit log: `AuditLog::record()` and `$subject->auditEntries()`; the package records `sealed`,
+  `accepted`, `declined` and `evidence_stored` itself, in the same transaction. Personal data and
+  secrets are refused as property keys; IPs only as the public-links HMAC.
+- Audit pruning (`audit.prune_after_days`, 90 by default, `null` = never) spares the evidence
+  chain: entries of decided or still decidable versions, and erasure records.
+- A subject with sealed versions cannot be deleted for good (`EvidenceIsPermanent`); soft
+  deletes keep working.
+- `Erasure::anonymize()` / `Erasure::purge()` and `php artisan filament-acceptance:erase`: the
+  deliberate, logged way to remove evidence.
 - Requires `victorio/filament-public-links` `^0.2`.

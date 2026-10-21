@@ -4,7 +4,8 @@ Global rules: ../CLAUDE.md
 
 Package-level notes. The global rules are not repeated here — read them first, then this file.
 Keep this file current: it is the context for every task in this package. The detailed plan is
-[docs/design.md](docs/design.md); status: **steps 1-2 of 5 done** (sealed versions, decisions, evidence files), ADR-0010.
+[docs/design.md](docs/design.md); status: **steps 1-3 of 5 done** (sealed versions, decisions, evidence files, audit log and
+retention), ADR-0010.
 
 ## Purpose
 
@@ -30,17 +31,19 @@ resource), a legally binding e-signature (simple electronic signature under eIDA
 | --- | --- | --- | --- |
 | `SealedVersion` | `filament-acceptance.tables.versions` | current Filament tenant, or `seal(tenant:)` | immutable; content in a text column, never `json`; never deleted automatically |
 | `Decision` | `filament-acceptance.tables.decisions` | copied from the version | unique per version; public-links' IP HMAC and access row; evidence file + hash; never deleted automatically |
-| `AuditEntry` | `filament-acceptance.tables.audit` | copied | `MassPrunable`, `audit.prune_after_days` 90, null = never |
+| `AuditEntry` | `filament-acceptance.tables.audit` | copied | immutable; `MassPrunable` (own `pruneAll`), 90 days, null = never; the evidence chain and erasure records are never pruned |
 
 ## Public API
 
 Everything listed here follows semver; everything else in `src/` is `@internal`.
 
 - `Support\CanonicalJson::encode()` (documented canonical form, RFC 8785-compatible subset).
-- `Concerns\HasSealedVersions`: `seal()`, `sealedVersions()`, `latestSealedVersion()`, later `auditEntries`.
+- `Concerns\HasSealedVersions`: `seal()`, `sealedVersions()`, `latestSealedVersion()`, `auditEntries()`,
+  `hasAnySealedVersion()`; refuses deleting a sealed subject for good.
 - `Models\SealedVersion` (`content()`, `internal()`, `verify()`, `forCurrentTenant()`), `Models\Decision`
   (`storeEvidence()`, `evidenceContents()`), `Models\AuditEntry`.
-- `Facades\Decisions::record()`, `Data\DecisionInput`, `Enums\DecisionKind`, later `Facades\AuditLog::record()`.
+- `Facades\Decisions::record()`, `Data\DecisionInput`, `Enums\DecisionKind`, `Facades\AuditLog::record()`,
+  `Facades\Erasure::anonymize()|purge()`, `Data\ErasureReport`, command `filament-acceptance:erase`.
 - `Http\DecisionLinkHandler` (abstract), Blade components `decision-forms`, `decision-summary`,
   `fingerprint`; Filament `VerifySealedVersionAction`, `AuditEntriesRelationManager`.
 - `Events\VersionSealed`, `Events\Decision{Recorded,Accepted,Declined}`, `Exceptions\*`; config and
@@ -56,6 +59,7 @@ public-links' HMAC (`IpHasher`), never their own (E4, E5).
 
 - MIT, public repository, like public-links; its API is public from 0.1, so semver matters.
 - Evidence (versions, decisions, evidence files) is never deleted by the package; tests pin it.
+  The only way out is `Erasure` (explicit, logged); pruning spares the evidence chain.
   Immutability is enforced in the model and its builder; below Eloquent only `verify()` detects
   changes (design.md a, "What immutability covers").
 - `Relations\StringKeyedMorphMany` and `Support\ModelKey` are copies of the public-links ones;

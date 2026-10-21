@@ -1,6 +1,7 @@
 # filament-acceptance — design
 
-Status: **approved** 2026-10-21; steps 1 (sealed versions) and 2 (decisions, evidence files) done. The short version lives in [../CLAUDE.md](../CLAUDE.md); this
+Status: **approved** 2026-10-21; steps 1-3 done (sealed versions; decisions and evidence files;
+audit log and retention). The short version lives in [../CLAUDE.md](../CLAUDE.md); this
 file is the detailed plan. No code exists yet. Decided in [ADR-0010](../../docs/decisions.md).
 
 ## 0. Purpose and boundaries
@@ -102,27 +103,56 @@ not a log: personal data (name, e-mail) the host is responsible for, documented 
 
 | Column | Type | Notes |
 | --- | --- | --- |
-| `id` | `id()` | Never exposed publicly. |
-| `tenant_id` | `string(36)`, nullable | |
+| `id` | `id()` | Never exposed publicly; orders entries written within the same second. |
+| `tenant_id` | `string(36)`, nullable | The version's tenant; otherwise the given or current Filament tenant. |
 | `subject_type`, `subject_id` | `string` | |
-| `sealed_version_id` | `ulid`, nullable | |
-| `event` | `string(64)` | Free, consumer-defined: `created`, `sealed`, `sent`, `viewed`, `accepted`, … |
+| `sealed_version_id` | `string(26)`, nullable, indexed | No FK: pruning decides per entry, an erasure removes versions and entries together. |
+| `event` | `string(64)` | The package writes `sealed`, `accepted`, `declined`, `evidence_stored`, `erasure`; consumers add theirs (`sent`, `viewed`, …). |
 | `causer_type`, `causer_id` | `string`, nullable | The admin; null for the public visitor. |
-| `ip_hash` | `char(64)`, nullable | Public events only, same HMAC. |
-| `properties` | `json`, nullable | Never tokens or personal data in plain text (E5). JSON column: F7. |
+| `ip_hash` | `char(64)`, nullable | Public events only: public-links' `IpHasher`, the access log's HMAC. |
+| `properties` | `json`, nullable | Ids, hashes, counts. A denylist of keys (`email`, `name`, `phone`, `ip`, `ip_address`, `token`, `password`, `secret`, at any depth) throws `AuditPropertyNotAllowed`. JSON column: F7. |
 | `occurred_at` | `timestamp`, indexed | The `prunable()` column. |
 
-`AuditEntry` uses `MassPrunable`: older than `audit.prune_after_days` (default **90**, rule E6;
-`null` = never pruned — allowed and documented). The host schedules `model:prune`.
+The package's own entries are written in the same transaction as the operation, so a rolled-back
+seal or decision leaves no entry. Names and e-mails never go into the log; they live in the
+decision only.
+
+**Pruning** (`MassPrunable`, `audit.prune_after_days`, default **90**, rule E6; `null` = never):
+an entry older than that is pruned only if it is not part of the evidence chain, that is if it
+has no version, or its version is superseded **and** has no decision. Entries of a decided
+version, of a version that can still be decided (not superseded — so a "sealed" entry older than
+90 days is still there when the customer finally accepts), and `erasure` records are kept.
+`AuditEntry::pruneAll()` deletes below Eloquent in chunks, because the evidence builder refuses
+deletes; it is the entry's only way out besides an erasure.
 
 ### Retention — evidence is never deleted automatically
 
-Sealed versions and decisions are **never** removed by the package: they are not `Prunable`, the
-decisions FK is `restrictOnDelete`, both models refuse `delete()`, and `HasSealedVersions` refuses
-to force-delete a subject that has sealed versions (soft deletes keep working). Evidence files are
-never deleted by the package either. Removing evidence is a deliberate host decision (e.g. a GDPR
-erasure) through `Evidence::purge($subject)`, which is explicit, logged and documented. Tests pin
-all of this (h).
+| | Deleted automatically? |
+| --- | --- |
+| Sealed versions, decisions, evidence files | Never (not prunable; models and builders refuse deletes; decisions FK `restrictOnDelete`) |
+| Audit entries of a decided or still decidable version, erasure records | Never |
+| Other audit entries | After `audit.prune_after_days` (90; `null` = never) |
+
+**Subjects.** `HasSealedVersions` refuses to delete a subject for good while it has sealed
+versions (`EvidenceIsPermanent`, checked across all tenants): with `SoftDeletes` a soft delete
+works and a force delete throws; without `SoftDeletes` the model cannot be deleted at all once
+sealed. A `Prunable` subject is therefore kept by `model:prune` (Laravel reports the exception and
+goes on). Mass deletes below the model events (`query()->delete()`, a `MassPrunable` subject,
+`DB::table()`) are not covered; the versions survive them (no FK) as orphans that still verify.
+The README recommends `SoftDeletes` on subjects.
+
+**Erasure** — the one deliberate way out, never called by the package itself
+(`Facades\Erasure`, `filament-acceptance:erase {type} {id} --reason= [--purge] [--force]`):
+
+- `anonymize`: nulls name, e-mail, comment, reason, user agent and IP hash of the subject's
+  decisions and the IP hashes of its audit entries. Content, hashes and evidence files stay, so
+  `verify()` keeps its result — and personal data **inside the sealed content** (a customer name
+  in a quote snapshot) stays too.
+- `purge`: removes the subject's versions, decisions, evidence files (after commit) and audit
+  entries; earlier erasure records stay.
+- Both need a non-empty reason, write an `erasure` entry (mode, reason, counts; for a purge the
+  removed versions' numbers and content hashes), log a notice with ids only, and go below
+  Eloquent on purpose. The command works by morph type and id, so it reaches orphans too.
 
 ## b) Public PHP API
 
@@ -239,8 +269,9 @@ AuditLog::record($quote, 'sent', causer: auth()->user(), version: $version,
 $quote->auditEntries;             // via HasSealedVersions, newest first
 ```
 
-Public-request entries (`viewed`, `accepted`, …) get the HMAC IP from the request; properties are
-checked against a small denylist (`token`, `email`, `ip`, `password`) and refused in tests.
+Pass the request for public events: the entry gets public-links' IP HMAC. Properties are checked
+against the denylist above. `AuditLog::record(..., tenant: $team)` for entries without a version
+written outside a Filament request.
 
 ### Public decision flow
 
@@ -321,7 +352,8 @@ return [
     ],
 
     'audit' => [
-        'prune_after_days' => 90,          // MassPrunable (E6); null = never pruned
+        'prune_after_days' => 90,          // MassPrunable (E6); null = never pruned; the evidence
+                                           // chain and erasure records are never pruned
     ],
 
     'decisions' => [

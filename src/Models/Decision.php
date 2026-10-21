@@ -15,6 +15,7 @@ use Victorio\Acceptance\Enums\DecisionKind;
 use Victorio\Acceptance\Exceptions\EvidenceAlreadyStored;
 use Victorio\Acceptance\Exceptions\EvidenceFileUnavailable;
 use Victorio\Acceptance\Support\AcceptanceConfig;
+use Victorio\Acceptance\Support\AuditLogger;
 
 /**
  * The accept or decline of one sealed version, bound to the hash of exactly that content.
@@ -127,15 +128,26 @@ class Decision extends Model
 
         $values = ['evidence_disk' => $disk, 'evidence_path' => $path, 'evidence_hash' => $hash];
 
-        // The one write a decision ever gets, below Eloquent on purpose and only while empty.
-        $written = $this->newQuery()->toBase()
-            ->where($this->getKeyName(), $this->getKey())
-            ->whereNull('evidence_path')
-            ->update($values);
+        $this->getConnection()->transaction(function () use ($values, $hash): void {
+            // The one write a decision ever gets, below Eloquent on purpose and only while empty.
+            $written = $this->newQuery()->toBase()
+                ->where($this->getKeyName(), $this->getKey())
+                ->whereNull('evidence_path')
+                ->update($values);
 
-        if ($written !== 1) {
-            throw EvidenceAlreadyStored::for($this);
-        }
+            if ($written !== 1) {
+                throw EvidenceAlreadyStored::for($this);
+            }
+
+            $version = $this->version()->first();
+
+            if ($version !== null) {
+                app(AuditLogger::class)->recordForVersion($version, 'evidence_stored', properties: [
+                    'decision_id' => $this->getKey(),
+                    'evidence_hash' => $hash,
+                ]);
+            }
+        });
 
         $this->setRawAttributes([...$this->getAttributes(), ...$values], sync: true);
     }

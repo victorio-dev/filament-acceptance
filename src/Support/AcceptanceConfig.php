@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Victorio\Acceptance\Support;
 
+use Victorio\Acceptance\Models\AuditEntry;
 use Victorio\Acceptance\Models\Decision;
 use Victorio\Acceptance\Models\SealedVersion;
 
@@ -37,6 +38,32 @@ final class AcceptanceConfig
         $model = config(self::KEY.'.models.decision', Decision::class);
 
         return $model;
+    }
+
+    /**
+     * @return class-string<AuditEntry>
+     */
+    public static function auditModel(): string
+    {
+        /** @var class-string<AuditEntry> $model */
+        $model = config(self::KEY.'.models.audit', AuditEntry::class);
+
+        return $model;
+    }
+
+    public static function auditTable(): string
+    {
+        return self::string('tables.audit', 'victorio_audit_entries');
+    }
+
+    /**
+     * Null keeps every entry forever.
+     */
+    public static function auditPruneAfterDays(): ?int
+    {
+        $days = config(self::KEY.'.audit.prune_after_days', 90);
+
+        return is_numeric($days) && (int) $days > 0 ? (int) $days : null;
     }
 
     public static function decisionsTable(): string

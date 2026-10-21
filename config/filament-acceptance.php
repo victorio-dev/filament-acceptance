@@ -16,6 +16,8 @@ return [
 
     'models' => [
         'version' => Victorio\Acceptance\Models\SealedVersion::class,
+        'decision' => Victorio\Acceptance\Models\Decision::class,
+        'audit' => Victorio\Acceptance\Models\AuditEntry::class,
     ],
 
     /*
@@ -27,6 +29,7 @@ return [
     'tables' => [
         'versions' => 'victorio_sealed_versions',
         'decisions' => 'victorio_decisions',
+        'audit' => 'victorio_audit_entries',
     ],
 
     /*
@@ -62,6 +65,22 @@ return [
         'disk' => 'local',
         'path' => 'victorio/evidence',
         'user_agent_max_length' => 255,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Audit log
+    |--------------------------------------------------------------------------
+    |
+    | Entries older than this are pruned by `model:prune` (rule E6), which the
+    | host app schedules — except the evidence chain: entries of a version that
+    | has a decision or can still get one (not superseded), and erasure records.
+    | null keeps every entry forever.
+    |
+    */
+
+    'audit' => [
+        'prune_after_days' => 90,
     ],
 
     /*

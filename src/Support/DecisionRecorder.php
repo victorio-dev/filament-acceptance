@@ -120,6 +120,12 @@ final class DecisionRecorder
                 throw DecisionAlreadyMade::for($locked);
             }
 
+            // No name or e-mail here: those live in the decision only.
+            app(AuditLogger::class)->recordForVersion($locked, $input->kind->value, request: $request, properties: [
+                'decision_id' => $decision->getKey(),
+                'content_hash' => $decision->content_hash,
+            ]);
+
             return $decision;
         });
 

@@ -5,7 +5,9 @@ declare(strict_types=1);
 use Illuminate\Database\Eloquent\MassPrunable;
 use Illuminate\Database\Eloquent\Prunable;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Str;
+use Victorio\Acceptance\Exceptions\EvidenceIsPermanent;
 use Victorio\Acceptance\Models\SealedVersion;
 use Victorio\Acceptance\Tests\Fixtures\MassPrunableSubject;
 use Victorio\Acceptance\Tests\Fixtures\PrunableSubject;
@@ -34,14 +36,18 @@ it('survives model:prune of every discovered model', function (): void {
     expect(SealedVersion::query()->count())->toBe(1);
 });
 
-it('survives when the subject is pruned model by model', function (): void {
+it('keeps a subject pruned model by model, and its versions', function (): void {
+    Exceptions::fake();
     $subject = PrunableSubject::create(['name' => 'Quote']);
     $subject->seal('quote', ['v' => 1]);
     $subject->seal('quote', ['v' => 2]);
 
     Artisan::call('model:prune', ['--model' => [PrunableSubject::class]]);
 
-    expect(PrunableSubject::query()->count())->toBe(0)
+    // Laravel reports the guard's exception for that model and prunes the others.
+    Exceptions::assertReported(EvidenceIsPermanent::class);
+
+    expect(PrunableSubject::query()->count())->toBe(1)
         ->and(SealedVersion::query()->count())->toBe(2)
         ->and(SealedVersion::query()->get()->every(fn (SealedVersion $version): bool => $version->verify()))->toBeTrue();
 });

@@ -3,8 +3,8 @@
 Sealed, tamper-evident document versions and provable accept or decline decisions for Filament,
 on top of [victorio/filament-public-links](https://github.com/victorio-dev/filament-public-links).
 
-> **Status: in development, not released.** Sealed versions, the canonical JSON, decisions and
-> evidence files exist; the public decision flow and the audit log follow
+> **Status: in development, not released.** Sealed versions, the canonical JSON, decisions,
+> evidence files and the audit log exist; the public decision flow and the Filament parts follow
 > ([docs/design.md](docs/design.md)).
 
 - Requires PHP `^8.3`, Laravel `^12.0|^13.0`, Filament `^4.0|^5.0`
@@ -38,6 +38,10 @@ $version->verify();         // true while the stored content is exactly what was
 $quote->sealedVersions;     // newest first
 $quote->latestSealedVersion();
 ```
+
+Every seal, decision and stored evidence file also lands in the document's timeline
+(`$quote->auditEntries`); add your own events with `AuditLog::record($quote, 'sent', ...)`.
+No personal data goes into it, and the IP only as the access log's HMAC.
 
 Content must be integers, strings, booleans, null and arrays: a float anywhere throws
 `NotCanonicalizable`, so money has to be in integer minor units. With Filament tenancy, a version
@@ -100,6 +104,56 @@ $decision->evidenceContents();                               // the bytes, after
 ```
 
 Use a private disk. The package never deletes an evidence file.
+
+## Retention and erasure
+
+What the package deletes on its own — only once you schedule `model:prune` (rule of thumb:
+daily, `Schedule::command('model:prune', ['--model' => [AuditEntry::class]])->daily()`):
+
+| | Deleted automatically? |
+| --- | --- |
+| Sealed versions, decisions, evidence files | **Never** |
+| Audit entries of a decided version, or of a version that can still be decided | **Never** |
+| Erasure records (see below) | **Never** |
+| Other audit entries | After `audit.prune_after_days` (90 days; `null` keeps them forever) |
+
+A model with sealed versions cannot be deleted for good: a force delete (or, without
+`SoftDeletes`, any delete) throws `EvidenceIsPermanent`. Use `SoftDeletes` on your subjects; a
+soft delete works as usual. Mass deletes that bypass model events (`Quote::query()->delete()`,
+a `MassPrunable` subject) cannot be stopped, but the sealed versions survive them.
+
+**Why keep it?** Proof of what was accepted is the point of this package. Under the GDPR, the
+right to erasure does not apply where processing is necessary for the establishment, exercise or
+defence of legal claims (Article 17(3)(e)); keeping acceptance evidence may rest on that. Whether
+it does in your case, and for how long, is your decision — **this is not legal advice**.
+
+**If your assessment requires erasure**, there is one deliberate, logged way; nothing in the
+package ever calls it:
+
+```php
+use Victorio\Acceptance\Facades\Erasure;
+
+// Removes name, e-mail, comment, reason, user agent and IP hash from the decisions,
+// and the IP hashes from the audit log. Hashes, sealed content and evidence files stay,
+// so verify() still holds.
+Erasure::anonymize($quote, reason: 'GDPR request #123', by: auth()->user());
+
+// Removes every sealed version, decision, evidence file and audit entry of the quote.
+Erasure::purge($quote, reason: 'GDPR request #123', by: auth()->user());
+```
+
+```bash
+php artisan filament-acceptance:erase "App\Models\Quote" 42 --reason="GDPR request #123" [--purge]
+```
+
+> **`anonymize` does not touch the sealed content.** If the snapshot itself holds personal data
+> — the customer's name and address in a quote — that data stays, and so does the evidence file
+> (a PDF of the quote). Only `purge` removes it.
+
+Both need a reason, write an `erasure` record into the audit log (mode, reason, counts; for a
+purge also the removed versions' numbers and hashes, never their content) and log a notice with
+ids only. The command works by type and id, so it also reaches the evidence of a quote that no
+longer exists.
 
 ### The canonical form
 

@@ -7,7 +7,10 @@ namespace Victorio\Acceptance;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
+use Victorio\Acceptance\Commands\EraseCommand;
+use Victorio\Acceptance\Support\AuditLogger;
 use Victorio\Acceptance\Support\DecisionRecorder;
+use Victorio\Acceptance\Support\Eraser;
 
 final class AcceptanceServiceProvider extends PackageServiceProvider
 {
@@ -23,7 +26,8 @@ final class AcceptanceServiceProvider extends PackageServiceProvider
             ->hasTranslations()
             // Every migration explicitly, by its stub filename without the extension. Never edit a
             // migration that is part of a tagged release — add a new one (rule A4).
-            ->hasMigrations(['create_sealed_versions_table', 'create_decisions_table'])
+            ->hasMigrations(['create_sealed_versions_table', 'create_decisions_table', 'create_audit_entries_table'])
+            ->hasCommand(EraseCommand::class)
             ->hasInstallCommand(function (InstallCommand $command): void {
                 // php artisan filament-acceptance:install (rule D11)
                 $command
@@ -36,5 +40,7 @@ final class AcceptanceServiceProvider extends PackageServiceProvider
     public function packageRegistered(): void
     {
         $this->app->singleton(DecisionRecorder::class);
+        $this->app->singleton(AuditLogger::class);
+        $this->app->singleton(Eraser::class);
     }
 }

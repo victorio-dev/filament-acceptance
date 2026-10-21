@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Prunable;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Exceptions;
 use Victorio\Acceptance\Exceptions\EvidenceIsImmutable;
 use Victorio\Acceptance\Exceptions\EvidenceIsPermanent;
 use Victorio\Acceptance\Models\Decision;
@@ -109,13 +110,14 @@ describe('retention', function (): void {
     });
 
     it('survives model:prune aimed at it, at its version and at its subject', function (): void {
+        Exceptions::fake();
         $subject = PrunableSubject::create(['name' => 'Quote']);
         decide($subject->seal('quote', ['v' => 1]));
 
         Artisan::call('model:prune', ['--model' => [Decision::class, SealedVersion::class, PrunableSubject::class]]);
         Artisan::call('model:prune');
 
-        expect(PrunableSubject::query()->count())->toBe(0)
+        expect(PrunableSubject::query()->count())->toBe(1)
             ->and(Decision::query()->count())->toBe(1)
             ->and(Decision::query()->sole()->verify())->toBeTrue();
     });

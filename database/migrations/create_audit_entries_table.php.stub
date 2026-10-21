@@ -1,0 +1,64 @@
+<?php
+
+declare(strict_types=1);
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create($this->table(), function (Blueprint $table): void {
+            // A sequence on purpose: it orders entries written within the same second.
+            $table->id();
+
+            $table->string($this->tenantColumn(), 36)->nullable()->index();
+
+            // Always strings, so int, ULID and UUID keyed subjects share one column (design.md a).
+            $table->string('subject_type');
+            $table->string('subject_id', 36);
+
+            // No foreign key: pruning decides per entry, and an erasure removes versions and their
+            // entries together.
+            $table->string('sealed_version_id', 26)->nullable()->index();
+
+            $table->string('event', 64);
+            $table->string('causer_type')->nullable();
+            $table->string('causer_id', 36)->nullable();
+
+            // filament-public-links' IP HMAC, never the raw IP (E4, E5).
+            $table->char('ip_hash', 64)->nullable();
+
+            // Never tokens or personal data (E5); JSON column, so `make check-db` (F7).
+            $table->json('properties')->nullable();
+
+            // The prunable() filter column (E6).
+            $table->timestamp('occurred_at')->index();
+
+            $table->index(['subject_type', 'subject_id']);
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists($this->table());
+    }
+
+    private function table(): string
+    {
+        /** @var string $table */
+        $table = config('filament-acceptance.tables.audit');
+
+        return $table;
+    }
+
+    private function tenantColumn(): string
+    {
+        /** @var string $column */
+        $column = config('filament-acceptance.tenancy.column');
+
+        return $column;
+    }
+};

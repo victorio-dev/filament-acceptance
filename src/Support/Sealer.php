@@ -76,6 +76,12 @@ final class Sealer
                 ->whereNull('superseded_at')
                 ->update(['superseded_at' => $now]);
 
+            app(AuditLogger::class)->recordForVersion($version, 'sealed', causer: $by, properties: [
+                'kind' => $kind,
+                'number' => $number,
+                'content_hash' => $version->content_hash,
+            ]);
+
             return $version;
         });
 

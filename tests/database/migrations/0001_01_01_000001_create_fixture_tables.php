@@ -28,6 +28,13 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        Schema::create('fixture_soft_subjects', function (Blueprint $table): void {
+            $table->id();
+            $table->string('name');
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
         Schema::create('fixture_ulid_subjects', function (Blueprint $table): void {
             $table->ulid('id')->primary();
             $table->string('name');
@@ -45,6 +52,7 @@ return new class extends Migration
     {
         Schema::dropIfExists('fixture_uuid_subjects');
         Schema::dropIfExists('fixture_ulid_subjects');
+        Schema::dropIfExists('fixture_soft_subjects');
         Schema::dropIfExists('fixture_int_subjects');
         Schema::dropIfExists('fixture_tenants');
         Schema::dropIfExists('fixture_users');
