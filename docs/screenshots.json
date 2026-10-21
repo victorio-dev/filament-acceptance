@@ -1,0 +1,279 @@
+{
+    "prepare": "demo:screenshots filament-acceptance",
+    "host": "app.acme.test",
+    "login": {
+        "path": "/admin/login",
+        "email": "input[type=email]",
+        "password": "input[type=password]"
+    },
+    "shots": [
+        {
+            "name": "decisions",
+            "path": "{documentEditPath}",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            },
+            "colorSchemes": [
+                "light",
+                "dark"
+            ],
+            "auth": true,
+            "steps": [
+                {
+                    "click": ".fi-tabs-item:has-text('Approvals')"
+                },
+                {
+                    "wait": ".fi-resource-relation-manager table"
+                }
+            ],
+            "hide": [
+                ".fi-sidebar"
+            ],
+            "capture": ".fi-resource-relation-manager",
+            "format": "png"
+        },
+        {
+            "name": "plugin-image",
+            "path": "{documentEditPath}",
+            "viewport": {
+                "width": 1280,
+                "height": 720
+            },
+            "colorSchemes": [
+                "light"
+            ],
+            "auth": true,
+            "steps": [
+                {
+                    "click": ".fi-tabs-item:has-text('Approvals')"
+                },
+                {
+                    "wait": ".fi-resource-relation-manager table"
+                },
+                {
+                    "scrollToTop": ".fi-resource-relation-manager"
+                }
+            ],
+            "hide": [
+                ".fi-sidebar",
+                ".fi-topbar",
+                ".fi-header",
+                "form"
+            ],
+            "capture": "viewport",
+            "format": "jpeg",
+            "quality": 85,
+            "scale": 2
+        },
+        {
+            "name": "activity",
+            "path": "{documentEditPath}",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            },
+            "colorSchemes": [
+                "light",
+                "dark"
+            ],
+            "auth": true,
+            "steps": [
+                {
+                    "click": ".fi-tabs-item:has-text('Approvals')"
+                },
+                {
+                    "wait": ".fi-resource-relation-manager table"
+                },
+                {
+                    "click": ".fi-resource-relation-manager button:has-text('Activity')"
+                },
+                {
+                    "pause": 1500
+                }
+            ],
+            "hide": [
+                ".fi-sidebar"
+            ],
+            "capture": "viewport",
+            "format": "jpeg",
+            "quality": 85
+        },
+        {
+            "name": "public-page",
+            "path": "{approvalPath}",
+            "viewport": {
+                "width": 1280,
+                "height": 800
+            },
+            "colorSchemes": [
+                "light",
+                "dark"
+            ],
+            "steps": [],
+            "capture": "page",
+            "format": "jpeg",
+            "quality": 85
+        },
+        {
+            "name": "public-page-mobile",
+            "path": "{approvalPath}",
+            "viewport": {
+                "width": 390,
+                "height": 760
+            },
+            "scale": 2,
+            "colorSchemes": [
+                "light",
+                "dark"
+            ],
+            "steps": [],
+            "capture": "viewport",
+            "format": "jpeg",
+            "quality": 85
+        },
+        {
+            "name": "public-page-decline",
+            "path": "{approvalPath}",
+            "viewport": {
+                "width": 1280,
+                "height": 800
+            },
+            "colorSchemes": [
+                "light"
+            ],
+            "steps": [
+                {
+                    "click": "summary"
+                },
+                {
+                    "scroll": ".fa-decline button"
+                }
+            ],
+            "capture": "viewport",
+            "format": "jpeg",
+            "quality": 85
+        },
+        {
+            "name": "public-page-errors",
+            "path": "{approvalPath}",
+            "viewport": {
+                "width": 1280,
+                "height": 800
+            },
+            "colorSchemes": [
+                "light"
+            ],
+            "steps": [
+                {
+                    "fill": [
+                        "#fa-name",
+                        "Anna Kovács"
+                    ]
+                },
+                {
+                    "fill": [
+                        "#fa-email",
+                        "anna@"
+                    ]
+                },
+                {
+                    "submit": "form[action$='/accept']"
+                },
+                {
+                    "scroll": ".fa-error-summary"
+                }
+            ],
+            "capture": "viewport",
+            "format": "jpeg",
+            "quality": 85
+        },
+        {
+            "name": "confirmation",
+            "path": "{confirmationPath}",
+            "viewport": {
+                "width": 1280,
+                "height": 800
+            },
+            "colorSchemes": [
+                "light",
+                "dark"
+            ],
+            "steps": [],
+            "capture": "viewport",
+            "format": "jpeg",
+            "quality": 85
+        },
+        {
+            "name": "send-modal",
+            "path": "{documentEditPath}",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            },
+            "colorSchemes": [
+                "light",
+                "dark"
+            ],
+            "auth": true,
+            "steps": [
+                {
+                    "click": ".fi-tabs-item:has-text('Approvals')"
+                },
+                {
+                    "wait": ".fi-resource-relation-manager table"
+                },
+                {
+                    "click": ".fi-resource-relation-manager button:has-text('Send for approval')"
+                },
+                {
+                    "wait": ".fi-modal-window:visible"
+                }
+            ],
+            "hide": [
+                ".fi-sidebar"
+            ],
+            "capture": ".fi-modal-window:visible",
+            "format": "png"
+        },
+        {
+            "name": "url-modal",
+            "path": "{documentEditPath}",
+            "viewport": {
+                "width": 1440,
+                "height": 900
+            },
+            "colorSchemes": [
+                "light",
+                "dark"
+            ],
+            "auth": true,
+            "steps": [
+                {
+                    "click": ".fi-tabs-item:has-text('Approvals')"
+                },
+                {
+                    "wait": ".fi-resource-relation-manager table"
+                },
+                {
+                    "click": ".fi-resource-relation-manager button:has-text('Send for approval')"
+                },
+                {
+                    "wait": ".fi-modal-window:visible"
+                },
+                {
+                    "click": ".fi-modal-window:visible button:has-text('Send')"
+                },
+                {
+                    "wait": ".fi-modal-window:visible button:has-text('Copy')"
+                }
+            ],
+            "hide": [
+                ".fi-no",
+                ".fi-sidebar"
+            ],
+            "capture": ".fi-modal-window:visible",
+            "format": "png"
+        }
+    ]
+}

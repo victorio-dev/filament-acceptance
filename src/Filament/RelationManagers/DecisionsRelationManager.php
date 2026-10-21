@@ -145,6 +145,8 @@ final class DecisionsRelationManager extends RelationManager
         return Action::make('downloadEvidence')
             ->label(Authorizer::label('actions.download.label'))
             ->icon('heroicon-o-arrow-down-tray')
+            ->iconButton()
+            ->tooltip(Authorizer::label('actions.download.label'))
             ->visible($allowed)
             ->authorize($allowed)
             ->action(static function (SealedVersion $record): ?StreamedResponse {
@@ -177,6 +179,8 @@ final class DecisionsRelationManager extends RelationManager
         return Action::make('verifySealedVersion')
             ->label(Authorizer::label('actions.verify.label'))
             ->icon('heroicon-o-shield-check')
+            ->iconButton()
+            ->tooltip(Authorizer::label('actions.verify.label'))
             ->visible($allowed)
             ->authorize($allowed)
             ->action(static function (SealedVersion $record): void {

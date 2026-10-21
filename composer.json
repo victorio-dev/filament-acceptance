@@ -1,12 +1,17 @@
 {
     "name": "victorio/filament-acceptance",
-    "description": "Sealed versions, provable accept or decline decisions and an audit log for Filament, on public links.",
+    "description": "Send any Filament record for approval: sealed, tamper-evident versions and provable accept or decline decisions on public links.",
     "keywords": [
         "laravel",
         "filament",
+        "filament-plugin",
         "victorio",
+        "approval",
         "acceptance",
-        "audit",
+        "e-signature",
+        "audit-trail",
+        "quotes",
+        "contracts",
         "public-links"
     ],
     "homepage": "https://github.com/victorio-dev/filament-acceptance",
