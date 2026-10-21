@@ -41,8 +41,11 @@ php artisan filament-public-links:install   # if you have not yet: links, access
 php artisan filament-acceptance:install     # publishes config and migrations, offers to migrate
 ```
 
-Schedule `model:prune` for the audit log and public-links' access log (see
-[Retention and erasure](#retention-and-erasure)):
+Non-interactive runs (`-n`, CI, deploys) do not migrate: run `php artisan migrate` afterwards.
+
+Schedule `model:prune` for the audit log and public-links' access log, both in one call (see
+[Retention and erasure](#retention-and-erasure)). Already scheduling public-links' prune? Add
+`AuditEntry::class` to that call instead of adding a second one:
 
 ```php
 // routes/console.php
@@ -61,12 +64,15 @@ reads the record's fields and accepts or declines. Three steps, no handler, no v
 **1. The model** says which fields the customer sees, with a label per language:
 
 ```php
+// app/Models/Document.php
+namespace App\Models;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Victorio\Acceptance\Approval\ApprovalField;
 use Victorio\Acceptance\Concerns\HasSealedVersions;
 
-class Offer extends Model
+class Document extends Model
 {
     use HasSealedVersions;
     use SoftDeletes;   // recommended: a sealed record can be soft deleted, never force deleted
@@ -79,7 +85,7 @@ class Offer extends Model
     public function approvalFields(): array
     {
         return [
-            ApprovalField::make('body')->multiline()->label(['en' => 'Offer', 'hu' => 'Ajánlat']),
+            ApprovalField::make('body')->multiline()->label(['en' => 'Document', 'hu' => 'Dokumentum']),
             ApprovalField::make('price_eur')->integer()->label(['en' => 'Price (EUR)', 'hu' => 'Ár (EUR)']),
             ApprovalField::make('valid_until')->date()->label(['en' => 'Valid until', 'hu' => 'Érvényes']),
         ];
@@ -90,12 +96,13 @@ class Offer extends Model
 Or keep the model untouched and say it on the panel plugin, which wins over the model:
 
 ```php
+use App\Models\Document;
 use Victorio\Acceptance\AcceptancePlugin;
 use Victorio\Acceptance\Approval\ApprovalField;
 
 $panel->plugins([
-    AcceptancePlugin::make()->approvable(Offer::class, title: 'title', fields: [
-        ApprovalField::make('body')->multiline()->label(['en' => 'Offer', 'hu' => 'Ajánlat']),
+    AcceptancePlugin::make()->approvable(Document::class, title: 'title', fields: [
+        ApprovalField::make('body')->multiline()->label(['en' => 'Document', 'hu' => 'Dokumentum']),
     ]),
 ]);
 ```
@@ -111,7 +118,16 @@ public static function getRelations(): array
 }
 ```
 
-`SendForApprovalAction::make()` also works on its own, as a page or table row action.
+`SendForApprovalAction` also works on its own, as a page or table row action:
+
+```php
+use Victorio\Acceptance\Filament\Actions\SendForApprovalAction;
+
+protected function getHeaderActions(): array
+{
+    return [SendForApprovalAction::make()];
+}
+```
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/victorio-dev/filament-acceptance/main/docs/images/send-modal-dark.png">
@@ -243,7 +259,7 @@ Start at the top of this list and stop at the first step that does the job.
    ```php
    public function approvalConsentText(): ?string
    {
-       return $this->brand === 'nordwind' ? __('offers.nordwind_consent') : null;
+       return $this->brand === 'nordwind' ? __('documents.nordwind_consent') : null;
    }
    ```
 
@@ -252,8 +268,11 @@ Start at the top of this list and stop at the first step that does the job.
    same button, form and URL modal:
 
    ```php
+   use App\Models\Document;
+   use Victorio\Acceptance\Filament\Actions\SendForApprovalAction;
+
    SendForApprovalAction::make()
-       ->purpose(fn (Offer $record): string => $record->is_brief ? 'brief' : 'approval');
+       ->purpose(fn (Document $record): string => $record->is_brief ? 'brief' : 'approval');
    ```
 
 5. **Your own handler** — for your own page content and behaviour (below).
@@ -270,6 +289,9 @@ change on acceptance, or a check before deciding, render the content yourself; t
 doing the rest — forms, validation, the confirmation, the superseded and closed states:
 
 ```php
+// app/Acceptance/DocumentDecision.php
+namespace App\Acceptance;
+
 use Illuminate\Contracts\Support\Htmlable;
 use Victorio\Acceptance\Http\DecisionLinkHandler;
 use Victorio\Acceptance\Models\SealedVersion;
@@ -277,28 +299,28 @@ use Victorio\PublicLinks\Builders\PendingPublicLink;
 use Victorio\PublicLinks\Data\PublicLinkVisit;
 use Victorio\PublicLinks\Facades\PublicLinks;
 
-final class QuoteDecision extends DecisionLinkHandler
+final class DocumentDecision extends DecisionLinkHandler
 {
     protected function renderContent(SealedVersion $version, PublicLinkVisit $visit): Htmlable
     {
-        return view('quotes.public', ['quote' => $version->content()]);   // escape with {{ }}
+        return view('documents.decision', ['document' => $version->content()]);   // escape with {{ }}
     }
 
     protected function title(SealedVersion $version): string
     {
-        return 'Quote '.$version->content()['number'];
+        return 'Document '.$version->content()['number'];
     }
 
     // Optional: isActionable(), consentText(), locale(), timezone(), transition()
 }
 
 // In a service provider's boot():
-PublicLinks::handle(SealedVersion::class, 'quote', QuoteDecision::class, 'Quote');
+PublicLinks::handle(SealedVersion::class, 'document', DocumentDecision::class, 'Document');
 
-// Send it:
-$url = (new PendingPublicLink($version, 'quote'))->expiresIn(days: 30)->issue()->url;
+// Send a sealed version ($document->seal(), below):
+$url = (new PendingPublicLink($version, 'document'))->expiresIn(days: 30)->issue()->url;
 
-// Or from Filament: SendForApprovalAction::make()->purpose('quote') seals the approval fields
+// Or from Filament: SendForApprovalAction::make()->purpose('document') seals the approval fields
 // and sends them to this handler.
 ```
 
@@ -327,27 +349,27 @@ The Filament parts and the built-in page are made of these; use them directly fo
 use Illuminate\Database\Eloquent\Model;
 use Victorio\Acceptance\Concerns\HasSealedVersions;
 
-class Quote extends Model
+class Document extends Model
 {
     use HasSealedVersions;
 }
 
-$version = $quote->seal(
-    kind: 'quote',
-    content: ['number' => 'Q-2026-0042', 'total' => 2_057_400],   // public, hashed
+$version = $document->seal(
+    kind: 'document',
+    content: ['number' => 'D-2026-0042', 'total' => 2_057_400],   // public, hashed
     internal: ['cost' => 1_200_000],                              // admin only, encrypted
     by: auth()->user(),
 );
 
-$version->number;           // 1, 2, 3 … per quote; sealing a new one supersedes the previous
+$version->number;           // 1, 2, 3 … per document; sealing a new one supersedes the previous
 $version->content_hash;     // SHA-256 of the stored canonical JSON
 $version->verify();         // true while the stored content is exactly what was sealed
-$quote->sealedVersions;     // newest first
-$quote->latestSealedVersion();
+$document->sealedVersions;     // newest first
+$document->latestSealedVersion();
 ```
 
 Every seal, decision and stored evidence file also lands in the document's timeline
-(`$quote->auditEntries`); add your own events with `AuditLog::record($quote, 'sent', ...)`.
+(`$document->auditEntries`); add your own events with `AuditLog::record($document, 'sent', ...)`.
 No personal data goes into it, and the IP only as the access log's HMAC.
 
 Content must be integers, strings, booleans, null and arrays: a float anywhere throws
@@ -384,7 +406,7 @@ $decision = Decisions::record(
     $version,
     DecisionInput::accept(name: 'Anna Kovács', email: 'anna@example.test', consentText: $checkboxLabel),
     request: $request,                                    // hashed IP and user agent
-    transition: fn (): bool => $quote->markAccepted(),    // your status change, same transaction
+    transition: fn (): bool => $document->markAccepted(), // your status change, same transaction
 );
 
 DecisionInput::decline(reason: 'Too expensive');          // name, e-mail and reason optional
@@ -406,7 +428,7 @@ never pruned.
 #### Evidence files
 
 ```php
-$decision->storeEvidence($pdfBytes, 'Q-2026-0042-v2.pdf');   // once, on evidence.disk, with its SHA-256
+$decision->storeEvidence($pdfBytes, 'D-2026-0042-v2.pdf');   // once, on evidence.disk, with its SHA-256
 $decision->evidenceContents();                               // the bytes, after checking the hash
 ```
 
@@ -477,7 +499,7 @@ daily, `Schedule::command('model:prune', ['--model' => [AuditEntry::class]])->da
 
 A model with sealed versions cannot be deleted for good: a force delete (or, without
 `SoftDeletes`, any delete) throws `EvidenceIsPermanent`. Use `SoftDeletes` on your subjects; a
-soft delete works as usual. Mass deletes that bypass model events (`Quote::query()->delete()`,
+soft delete works as usual. Mass deletes that bypass model events (`Document::query()->delete()`,
 a `MassPrunable` subject) cannot be stopped, but the sealed versions survive them.
 
 **Why keep it?** Proof of what was accepted is the point of this package. Under the GDPR, the
@@ -494,14 +516,14 @@ use Victorio\Acceptance\Facades\Erasure;
 // Removes name, e-mail, comment, reason, user agent and IP hash from the decisions,
 // and the IP hashes from the audit log. Hashes, sealed content and evidence files stay,
 // so verify() still holds.
-Erasure::anonymize($quote, reason: 'GDPR request #123', by: auth()->user());
+Erasure::anonymize($document, reason: 'GDPR request #123', by: auth()->user());
 
-// Removes every sealed version, decision, evidence file and audit entry of the quote.
-Erasure::purge($quote, reason: 'GDPR request #123', by: auth()->user());
+// Removes every sealed version, decision, evidence file and audit entry of the document.
+Erasure::purge($document, reason: 'GDPR request #123', by: auth()->user());
 ```
 
 ```bash
-php artisan filament-acceptance:erase "App\Models\Quote" 42 --reason="GDPR request #123" [--purge]
+php artisan filament-acceptance:erase "App\Models\Document" 42 --reason="GDPR request #123" [--purge]
 ```
 
 > **`anonymize` does not touch the sealed content.** If the snapshot itself holds personal data
