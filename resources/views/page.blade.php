@@ -1,7 +1,7 @@
 {{--
     The public page of a sealed version (DecisionLinkHandler::show()), in the public-links layout:
     the consumer's content, the version fingerprint, and the forms or the decision. Every value is
-    escaped; $content is the consumer's own Htmlable.
+    escaped; $content and $unavailableNotice are the consumer's own Htmlable.
 --}}
 @php
     $notices = ['accepted', 'declined', 'already_decided', 'closed'];
@@ -11,7 +11,8 @@
 
     <x-filament-acceptance::styles />
 
-    @if ($notice !== null && in_array($notice, $notices, true))
+    {{-- A consumer's own unavailable notice already says why the version is closed. --}}
+    @if ($notice !== null && in_array($notice, $notices, true) && ! ($notice === 'closed' && $unavailableNotice !== null))
         <p class="fa-notice" role="status">{{ __('filament-acceptance::filament-acceptance.notice.'.$notice) }}</p>
     @endif
 
@@ -28,9 +29,13 @@
     @elseif ($actionable)
         <x-filament-acceptance::decision-forms :action="$action" :consent-text="$consentText" :consent-hash="$consentHash" />
     @else
-        @if ($notice !== 'closed')
+        @if ($unavailableNotice !== null)
+            <div class="fa-notice" role="status">{{ $unavailableNotice }}</div>
+        @elseif ($notice !== 'closed')
             <p class="fa-notice" role="status">{{ __('filament-acceptance::filament-acceptance.notice.closed') }}</p>
         @endif
-        @include('filament-acceptance::partials.contact', ['email' => $contactEmail])
+        @if ($showContact)
+            @include('filament-acceptance::partials.contact', ['email' => $contactEmail])
+        @endif
     @endif
 </x-filament-public-links::layout>

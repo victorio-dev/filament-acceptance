@@ -98,6 +98,17 @@ it('has no hard-coded text on a closed version', function (): void {
     expect(PseudoLocale::untranslated((string) get($path)->getContent(), decisionData($version)))->toBe([]);
 });
 
+it('has no hard-coded text around the consumer\'s own unavailable notice', function (): void {
+    TestDecisionHandler::$actionable = false;
+    TestDecisionHandler::$notice = 'Expired on 31 October 2026.';
+    ['path' => $path, 'version' => $version] = pseudoLink();
+
+    $html = (string) get($path)->getContent();
+
+    expect(PseudoLocale::untranslated($html, [...decisionData($version), 'Expired on 31 October 2026.']))->toBe([])
+        ->and($html)->toContain('Expired on 31 October 2026.');
+});
+
 it('has no hard-coded text on the superseded and the unverifiable pages', function (): void {
     ['path' => $path, 'version' => $version, 'subject' => $subject] = pseudoLink();
     ['path' => $tampered, 'version' => $tamperedVersion] = pseudoLink();

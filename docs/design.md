@@ -291,6 +291,7 @@ final class QuoteLinkHandler extends DecisionLinkHandler
 
     protected function title(SealedVersion $version): string { … }               // "Quote Q-2026-0042"
     protected function isActionable(SealedVersion $version): bool { … }          // optional: not expired
+    protected function unavailableNotice(SealedVersion $version): ?Htmlable { … } // optional, 0.1.1
     protected function consentText(SealedVersion $version): string { … }         // optional
     protected function locale(SealedVersion $version): string { … }              // optional
     protected function timezone(SealedVersion $version): string { … }            // optional
@@ -327,7 +328,7 @@ PublicLinks::handle(SealedVersion::class, 'quote', QuoteLinkHandler::class, 'Quo
 | --- | --- |
 | GET, decidable | content, fingerprint, one form (name, e-mail, comment, consent) with Accept (primary) and Decline (`formaction` to `decline`, `formnovalidate`) |
 | GET, decided | content, fingerprint, confirmation, evidence download |
-| GET, `isActionable()` false | content, "can no longer be accepted or declined", contact |
+| GET, `isActionable()` false | content, "can no longer be accepted or declined" or the consumer's `unavailableNotice()` (0.1.1), the contact once (left out when `unavailableNoticeHasContact()`) |
 | GET, superseded version | 410 "A newer version was prepared", contact address |
 | POST decline, valid | 200 confirmation page: subject, fingerprint, "cannot be undone", name/e-mail/reason prefilled; nothing recorded |
 | POST back | 303 to the page with the values as old input |

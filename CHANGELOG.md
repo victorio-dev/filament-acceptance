@@ -7,6 +7,14 @@ marked `@internal`.
 
 ## [Unreleased]
 
+### Added
+
+- **Your own message when a document can no longer be decided.** A decision handler can return
+  `unavailableNotice()`, for example "This quote expired on 31 October 2026.", and the page shows
+  it instead of the general "can no longer be accepted or declined". The contact address appears
+  once: below your message, or not at all when `unavailableNoticeHasContact()` says your message
+  has its own.
+
 ## [0.1.0] - 2026-10-21
 
 ### Added

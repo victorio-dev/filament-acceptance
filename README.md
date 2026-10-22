@@ -311,7 +311,8 @@ final class DocumentDecision extends DecisionLinkHandler
         return 'Document '.$version->content()['number'];
     }
 
-    // Optional: isActionable(), consentText(), locale(), timezone(), transition()
+    // Optional: isActionable(), unavailableNotice(), unavailableNoticeHasContact(), consentText(),
+    // locale(), timezone(), transition()
 }
 
 // In a service provider's boot():
@@ -323,6 +324,11 @@ $url = (new PendingPublicLink($version, 'document'))->expiresIn(days: 30)->issue
 // Or from Filament: SendForApprovalAction::make()->purpose('document') seals the approval fields
 // and sends them to this handler.
 ```
+
+When `isActionable()` says no, the page shows "This document can no longer be accepted or
+declined." and the contact address. `unavailableNotice()` replaces that sentence with your own
+(an `Htmlable`, e.g. "This quote expired on 31 October 2026."); the contact address still
+follows once, unless `unavailableNoticeHasContact()` returns `true` because your notice has its own.
 
 - The page shows your content, the version's fingerprint and one form (name, e-mail, comment,
   consent checkbox) with an Accept and a Decline button, without JavaScript. Accept needs the

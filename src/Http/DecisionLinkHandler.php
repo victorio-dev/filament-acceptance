@@ -77,6 +77,25 @@ abstract class DecisionLinkHandler implements HandlesPublicLinkActions, PublicLi
     }
 
     /**
+     * What a version that cannot be decided (isActionable() false, no decision) shows instead of
+     * the general "can no longer be accepted or declined" notice, e.g. "This quote expired on …".
+     * Null keeps the general notice. Escape everything that is not trusted markup.
+     */
+    protected function unavailableNotice(SealedVersion $version): ?Htmlable
+    {
+        return null;
+    }
+
+    /**
+     * Whether unavailableNotice() carries its own contact line. Otherwise the page adds the
+     * branding's contact address below it, so the contact appears once either way.
+     */
+    protected function unavailableNoticeHasContact(SealedVersion $version): bool
+    {
+        return false;
+    }
+
+    /**
      * The checkbox label. Exactly this text is stored with an acceptance.
      */
     protected function consentText(SealedVersion $version): string
@@ -135,6 +154,7 @@ abstract class DecisionLinkHandler implements HandlesPublicLinkActions, PublicLi
         $decision = $version->decision()->first();
         $actionable = $decision === null && $this->isActionable($version);
         $consentText = $this->consentText($version);
+        $unavailableNotice = $decision === null && ! $actionable ? $this->unavailableNotice($version) : null;
         $notice = $visit->request->hasSession() ? $visit->request->session()->get(self::NOTICE) : null;
 
         return response()->view('filament-acceptance::page', [
@@ -146,6 +166,8 @@ abstract class DecisionLinkHandler implements HandlesPublicLinkActions, PublicLi
             'decidedAt' => $decision === null ? null : $this->decidedAt($decision, $version),
             'actionable' => $actionable,
             'closed' => $decision === null && ! $actionable,
+            'unavailableNotice' => $unavailableNotice,
+            'showContact' => $unavailableNotice === null || ! $this->unavailableNoticeHasContact($version),
             'consentText' => $consentText,
             'consentHash' => hash('sha256', $consentText),
             'action' => $this->pageUrl($visit),

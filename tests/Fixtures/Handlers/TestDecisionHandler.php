@@ -25,12 +25,18 @@ final class TestDecisionHandler extends DecisionLinkHandler
 
     public static ?string $locale = null;
 
+    public static ?string $notice = null;
+
+    public static bool $noticeHasContact = false;
+
     public static function reset(): void
     {
         self::$actionable = true;
         self::$transition = true;
         self::$consent = null;
         self::$locale = null;
+        self::$notice = null;
+        self::$noticeHasContact = false;
     }
 
     protected function renderContent(SealedVersion $version, PublicLinkVisit $visit): Htmlable
@@ -51,6 +57,16 @@ final class TestDecisionHandler extends DecisionLinkHandler
     protected function isActionable(SealedVersion $version): bool
     {
         return self::$actionable;
+    }
+
+    protected function unavailableNotice(SealedVersion $version): ?Htmlable
+    {
+        return self::$notice === null ? null : new HtmlString('<p class="fixture-notice">'.e(self::$notice).'</p>');
+    }
+
+    protected function unavailableNoticeHasContact(SealedVersion $version): bool
+    {
+        return self::$noticeHasContact;
     }
 
     protected function consentText(SealedVersion $version): string

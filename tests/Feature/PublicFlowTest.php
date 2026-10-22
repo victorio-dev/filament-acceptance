@@ -315,6 +315,62 @@ describe('versions that cannot be decided', function (): void {
         expect(Decision::query()->count())->toBe(0);
     });
 
+    it('shows the general notice and the contact once by default', function (): void {
+        TestDecisionHandler::$actionable = false;
+        ['path' => $path] = decisionLink();
+
+        $html = (string) get($path)->assertOk()->getContent();
+
+        expect(substr_count($html, 'This document can no longer be accepted or declined.'))->toBe(1)
+            ->and(substr_count($html, 'mailto:quotes@acme.test'))->toBe(1);
+    });
+
+    it('shows the consumer\'s own notice instead of the general one, with the contact once', function (): void {
+        TestDecisionHandler::$actionable = false;
+        TestDecisionHandler::$notice = 'This quote expired on 31 October 2026.';
+        ['path' => $path] = decisionLink();
+
+        $html = (string) get($path)->assertOk()->getContent();
+
+        expect($html)->toContain('<p class="fixture-notice">This quote expired on 31 October 2026.</p>')
+            ->and($html)->not->toContain('This document can no longer be accepted or declined.')
+            ->and($html)->not->toContain('fa-accept-heading')
+            ->and(substr_count($html, 'mailto:quotes@acme.test'))->toBe(1);
+    });
+
+    it('leaves the contact out when the consumer\'s notice carries its own', function (): void {
+        TestDecisionHandler::$actionable = false;
+        TestDecisionHandler::$notice = 'Expired. Write to sales@acme.test.';
+        TestDecisionHandler::$noticeHasContact = true;
+        ['path' => $path] = decisionLink();
+
+        $html = (string) get($path)->assertOk()->getContent();
+
+        expect($html)->toContain('Expired. Write to sales@acme.test.')
+            ->and($html)->not->toContain('mailto:quotes@acme.test');
+    });
+
+    it('does not repeat the closed notice after a refused decision when the consumer has its own', function (): void {
+        TestDecisionHandler::$actionable = false;
+        TestDecisionHandler::$notice = 'This quote expired on 31 October 2026.';
+        ['path' => $path] = decisionLink();
+
+        submit($path, 'accept', acceptForm())->assertStatus(303);
+
+        $html = (string) get($path)->assertOk()->getContent();
+
+        expect(substr_count($html, 'This quote expired on 31 October 2026.'))->toBe(1)
+            ->and($html)->not->toContain('This document can no longer be accepted or declined.')
+            ->and(Decision::query()->count())->toBe(0);
+    });
+
+    it('ignores the consumer\'s notice while the version can be decided', function (): void {
+        TestDecisionHandler::$notice = 'This quote expired on 31 October 2026.';
+        ['path' => $path] = decisionLink();
+
+        expect((string) get($path)->getContent())->not->toContain('This quote expired');
+    });
+
     it('refuses when the consumer\'s transition says no', function (): void {
         TestDecisionHandler::$transition = false;
         ['path' => $path] = decisionLink();

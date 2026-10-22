@@ -44,8 +44,8 @@ Everything listed here follows semver; everything else in `src/` is `@internal`.
 - `Facades\Decisions::record()`, `Data\DecisionInput`, `Enums\DecisionKind`, `Facades\AuditLog::record()`,
   `Facades\Erasure::anonymize()|purge()`, `Data\ErasureReport`, command `filament-acceptance:erase`.
 - `Http\DecisionLinkHandler` (abstract: `renderContent()`, `title()`, optional `isActionable()`,
-  `consentText()`, `locale()`, `timezone()`, `transition()`), Blade components `styles`,
-  `decision-forms`, `decision-summary`, `fingerprint`.
+  `unavailableNotice()`, `unavailableNoticeHasContact()`, `consentText()`, `locale()`, `timezone()`,
+  `transition()`), Blade components `styles`, `decision-forms`, `decision-summary`, `fingerprint`.
 - Approval without code: `Approval\ApprovalField`, `approvalFields()` / `approvalTitle()` /
   `approvalConsentText()`, `SendForApprovalAction::purpose()`,
   `AcceptancePlugin::approvable()`, `Http\ApprovalLinkHandler`; Filament
