@@ -7,6 +7,8 @@ marked `@internal`.
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-22
+
 ### Added
 
 - **Your own message when a document can no longer be decided.** A decision handler can return
