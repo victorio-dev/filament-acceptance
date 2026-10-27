@@ -7,6 +7,8 @@ marked `@internal`.
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-10-27
+
 ### Added
 
 - `Decision::evidenceFilename()` and `Decision::evidenceMimeType()`: the stored file's name without
