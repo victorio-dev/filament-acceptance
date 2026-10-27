@@ -19,6 +19,10 @@ marked `@internal`.
   detected type (a PDF as `application/pdf`), the stored name as an attachment with an ASCII
   fallback, and `X-Content-Type-Options: nosniff`. Types a browser could run (HTML, SVG, XML,
   scripts and anything else not known to be inert) still go out as `application/octet-stream`.
+- **Sealing inside a transaction that already read the versions.** On MySQL (REPEATABLE READ) the
+  next version number came from the caller's snapshot, so a version committed in the meantime
+  made `seal()` fail on the unique index. The number now comes from a locking read, which sees
+  the latest committed version.
 
 ## [0.1.1] - 2026-10-22
 

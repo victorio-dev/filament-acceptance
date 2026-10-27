@@ -46,10 +46,15 @@ final class Sealer
 
             $subjectType = $subject->getMorphClass();
             $subjectId = ModelKey::of($subject);
+            // A locking read: on mysql (REPEATABLE READ) a plain one would see the snapshot of a
+            // caller's transaction that read before the lock, and miss a version committed since.
+            // ORDER BY + LIMIT, because pgsql refuses FOR UPDATE with an aggregate.
             $previous = $model::query()
                 ->where('subject_type', $subjectType)
                 ->where('subject_id', $subjectId)
-                ->max('number');
+                ->orderByDesc('number')
+                ->lockForUpdate()
+                ->value('number');
             $number = (is_numeric($previous) ? (int) $previous : 0) + 1;
             $now = now();
 

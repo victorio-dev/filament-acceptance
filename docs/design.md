@@ -192,6 +192,8 @@ $version = $quote->seal(
     internal: ['costs' => $costs], // optional, encrypted, never hashed
     by: auth()->user(),
 );   // SealedVersion; number = previous + 1, the previous one gets superseded_at
+   // (the subject row is locked, then the previous number is read with FOR UPDATE: a plain
+   // read would see the snapshot of a caller's mysql transaction that read before; 0.1.2)
 
 $quote->sealedVersions;            // newest first, current tenant only
 $quote->latestSealedVersion();

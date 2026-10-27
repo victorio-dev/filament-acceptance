@@ -129,3 +129,42 @@ it('does not announce a version whose transaction rolled back', function (): voi
     expect($announced)->toBe(0)
         ->and(SealedVersion::query()->count())->toBe(0);
 });
+
+it('numbers from the latest committed version, not the caller\'s snapshot', function (): void {
+    $default = DB::getDefaultConnection();
+    config()->set('database.connections.second', config('database.connections.'.$default));
+    $second = DB::connection('second');
+    $subject = IntSubject::create(['name' => 'Quote']);
+    $committedId = (string) str()->ulid();
+
+    try {
+        // The caller's transaction (here the test's own) reads first: on mysql (REPEATABLE READ)
+        // that fixes its snapshot, which a plain read inside seal() would still see.
+        expect($subject->sealedVersions()->count())->toBe(0);
+
+        // Meanwhile another request commits version 1 of the same subject.
+        $second->table('victorio_sealed_versions')->insert([
+            'id' => $committedId,
+            'subject_type' => $subject->getMorphClass(),
+            'subject_id' => (string) $subject->getKey(),
+            'kind' => 'quote',
+            'number' => 1,
+            'content' => '[]',
+            'content_hash' => hash('sha256', '[]'),
+            'sealed_at' => now(),
+        ]);
+
+        $version = $subject->seal('quote', ['v' => 2]);
+
+        expect($version->number)->toBe(2);
+    } finally {
+        // seal() locked the committed row (superseded_at); end the test's transaction first.
+        DB::rollBack();
+        $second->table('victorio_sealed_versions')->where('id', $committedId)->delete();
+        DB::purge('second');
+    }
+})->skip(
+    // A second connection to :memory: is another database; mysql is where this bit.
+    fn (): bool => DB::connection()->getDriverName() === 'sqlite',
+    'Needs a second connection to the same server (mysql, pgsql).',
+);
