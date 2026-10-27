@@ -40,7 +40,7 @@ Everything listed here follows semver; everything else in `src/` is `@internal`.
 - `Concerns\HasSealedVersions`: `seal()`, `sealedVersions()`, `latestSealedVersion()`, `auditEntries()`,
   `hasAnySealedVersion()`; refuses deleting a sealed subject for good.
 - `Models\SealedVersion` (`content()`, `internal()`, `verify()`, `forCurrentTenant()`), `Models\Decision`
-  (`storeEvidence()`, `evidenceContents()`), `Models\AuditEntry`.
+  (`storeEvidence()`, `evidenceContents()`, `evidenceFilename()`, `evidenceMimeType()`), `Models\AuditEntry`.
 - `Facades\Decisions::record()`, `Data\DecisionInput`, `Enums\DecisionKind`, `Facades\AuditLog::record()`,
   `Facades\Erasure::anonymize()|purge()`, `Data\ErasureReport`, command `filament-acceptance:erase`.
 - `Http\DecisionLinkHandler` (abstract: `renderContent()`, `title()`, optional `isActionable()`,

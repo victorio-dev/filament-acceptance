@@ -7,6 +7,19 @@ marked `@internal`.
 
 ## [Unreleased]
 
+### Added
+
+- `Decision::evidenceFilename()` and `Decision::evidenceMimeType()`: the stored file's name without
+  the hash prefix, and its type as the disk detects it from the contents.
+
+### Fixed
+
+- **Evidence downloads carry the file's own type.** The public page sent every file as
+  `application/octet-stream`, and the Filament action sent no type at all; both now send the
+  detected type (a PDF as `application/pdf`), the stored name as an attachment with an ASCII
+  fallback, and `X-Content-Type-Options: nosniff`. Types a browser could run (HTML, SVG, XML,
+  scripts and anything else not known to be inert) still go out as `application/octet-stream`.
+
 ## [0.1.1] - 2026-10-22
 
 ### Added

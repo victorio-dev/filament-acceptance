@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use RuntimeException;
 use Victorio\Acceptance\Concerns\IsEvidence;
 use Victorio\Acceptance\Enums\DecisionKind;
@@ -188,6 +189,37 @@ class Decision extends Model
         }
 
         return true;
+    }
+
+    /**
+     * The evidence file's name as stored, without the hash prefix the package added
+     * (e.g. "Q-2026-0042-v1.pdf"); null without a file.
+     */
+    public function evidenceFilename(): ?string
+    {
+        if ($this->evidence_path === null) {
+            return null;
+        }
+
+        // The prefix is 12 hex characters and a dash; the name after it is never empty.
+        return Str::after(basename($this->evidence_path), '-');
+    }
+
+    /**
+     * The evidence file's MIME type as the disk detects it (from the contents, the extension as
+     * fallback), e.g. "application/pdf"; null without a file, `application/octet-stream` when the
+     * disk cannot tell. This is the real type: serve it through the package's downloads, which
+     * send browser-executable types as `application/octet-stream`.
+     */
+    public function evidenceMimeType(): ?string
+    {
+        if ($this->evidence_path === null || $this->evidence_disk === null) {
+            return null;
+        }
+
+        $type = Storage::disk($this->evidence_disk)->mimeType($this->evidence_path);
+
+        return is_string($type) && $type !== '' ? $type : 'application/octet-stream';
     }
 
     private static function safeFilename(string $filename): string

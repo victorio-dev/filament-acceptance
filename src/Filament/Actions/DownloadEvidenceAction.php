@@ -6,12 +6,12 @@ namespace Victorio\Acceptance\Filament\Actions;
 
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
-use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Victorio\Acceptance\Exceptions\EvidenceFileUnavailable;
 use Victorio\Acceptance\Filament\Support\Authorizer;
 use Victorio\Acceptance\Filament\Support\OwnerRecord;
 use Victorio\Acceptance\Models\SealedVersion;
+use Victorio\Acceptance\Support\EvidenceDownload;
 
 /**
  * Downloads the evidence file stored with a version's decision, after checking its hash; a
@@ -55,11 +55,10 @@ final class DownloadEvidenceAction extends Action
                     return null;
                 }
 
-                $filename = Str::after(basename((string) $decision->evidence_path), '-');
-
+                // The name travels in the headers' Content-Disposition, as on the public page.
                 return response()->streamDownload(static function () use ($contents): void {
                     echo $contents;
-                }, $filename);
+                }, null, EvidenceDownload::headers($decision));
             });
     }
 }

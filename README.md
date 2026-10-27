@@ -436,9 +436,17 @@ never pruned.
 ```php
 $decision->storeEvidence($pdfBytes, 'D-2026-0042-v2.pdf');   // once, on evidence.disk, with its SHA-256
 $decision->evidenceContents();                               // the bytes, after checking the hash
+$decision->evidenceFilename();                               // "D-2026-0042-v2.pdf"
+$decision->evidenceMimeType();                               // "application/pdf", from the contents
 ```
 
 Use a private disk. The package never deletes an evidence file.
+
+Both downloads, the customer's on the public page and `DownloadEvidenceAction` in Filament, send
+the file as an attachment under its own name (with an ASCII fallback for older browsers) and its
+own type. A type a browser could run on your domain — HTML, SVG, XML, scripts, anything outside
+PDF, plain images, text, CSV, ZIP and office documents — goes out as `application/octet-stream`,
+and every download carries `X-Content-Type-Options: nosniff`.
 
 #### The canonical form
 

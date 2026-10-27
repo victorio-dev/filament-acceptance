@@ -228,7 +228,17 @@ describe('DecisionsRelationManager', function (): void {
 
         decisionsTable(Document::query()->sole())
             ->callTableAction('downloadEvidence', $version)
-            ->assertFileDownloaded('offer.pdf', '%PDF accepted');
+            ->assertFileDownloaded('offer.pdf', '%PDF accepted', 'application/pdf');
+    });
+
+    it('downloads a document a browser could run as a plain file', function (): void {
+        Storage::fake('local');
+        $version = sealedForApproval(approvalDocument(), 'accepted');
+        Decision::query()->sole()->storeEvidence('<!DOCTYPE html><html><script>alert(1)</script></html>', 'offer.html');
+
+        decisionsTable(Document::query()->sole())
+            ->callTableAction('downloadEvidence', $version)
+            ->assertFileDownloaded('offer.html', contentType: 'application/octet-stream');
     });
 
     it('refuses to download a changed document', function (): void {

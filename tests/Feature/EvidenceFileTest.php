@@ -8,6 +8,7 @@ use Victorio\Acceptance\Exceptions\EvidenceAlreadyStored;
 use Victorio\Acceptance\Exceptions\EvidenceFileUnavailable;
 use Victorio\Acceptance\Exceptions\EvidenceIsPermanent;
 use Victorio\Acceptance\Models\Decision;
+use Victorio\Acceptance\Support\EvidenceDownload;
 
 beforeEach(function (): void {
     Storage::fake('local');
@@ -98,3 +99,54 @@ it('keeps the file name safe', function (): void {
     expect((string) $decision->evidence_path)->not->toContain('..')
         ->and((string) $decision->evidence_path)->toMatch('#^victorio/evidence/[0-9a-z]{26}/[0-9a-f]{12}-[A-Za-z0-9._-]+$#');
 });
+
+it('tells the file\'s name and type', function (): void {
+    $decision = decide();
+
+    expect($decision->evidenceFilename())->toBeNull()
+        ->and($decision->evidenceMimeType())->toBeNull();
+
+    $decision->storeEvidence('%PDF-1.7 quote', 'Q-2026-0042 v1.pdf');
+
+    expect($decision->evidenceFilename())->toBe('Q-2026-0042-v1.pdf')
+        ->and($decision->evidenceMimeType())->toBe('application/pdf');
+});
+
+it('tells the type from the contents, not the name', function (): void {
+    $decision = decide();
+    $decision->storeEvidence('<!DOCTYPE html><html><body>hi</body></html>', 'quote.pdf');
+
+    expect($decision->evidenceMimeType())->toBe('text/html');
+});
+
+it('sends a non-ASCII file name with an ASCII fallback', function (): void {
+    // The package stores ASCII names; a host subclass or an older row may not.
+    $decision = new Decision;
+    $decision->setRawAttributes(['evidence_disk' => 'evidence', 'evidence_path' => 'victorio/evidence/x/0123456789ab-árajánlat 100%.pdf']);
+    Storage::disk('evidence')->put('victorio/evidence/x/0123456789ab-árajánlat 100%.pdf', '%PDF-1.7');
+
+    expect(EvidenceDownload::headers($decision))->toBe([
+        'Content-Type' => 'application/pdf',
+        'Content-Disposition' => "attachment; filename=\"arajanlat 100-.pdf\"; filename*=utf-8''%C3%A1raj%C3%A1nlat%20100%25.pdf",
+        'X-Content-Type-Options' => 'nosniff',
+    ]);
+});
+
+it('serves only inert types as they are', function (string $type, string $served): void {
+    expect(EvidenceDownload::servedType($type))->toBe($served);
+})->with([
+    ['application/pdf', 'application/pdf'],
+    ['image/png', 'image/png'],
+    ['text/plain; charset=utf-8', 'text/plain'],
+    ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+    ['text/html', 'application/octet-stream'],
+    ['TEXT/HTML; charset=utf-8', 'application/octet-stream'],
+    ['application/xhtml+xml', 'application/octet-stream'],
+    ['image/svg+xml', 'application/octet-stream'],
+    ['text/xml', 'application/octet-stream'],
+    ['application/xml', 'application/octet-stream'],
+    ['text/javascript', 'application/octet-stream'],
+    ['application/x-shockwave-flash', 'application/octet-stream'],
+    ['application/pdfx', 'application/octet-stream'],
+    ['', 'application/octet-stream'],
+]);

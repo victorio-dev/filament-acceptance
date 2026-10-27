@@ -248,6 +248,8 @@ $decision->storeEvidence(contents: $pdfBytes, filename: 'Q-2026-0042-v2.pdf');
 // writes to evidence.disk under evidence.path, sets evidence_path and evidence_hash once
 $decision->evidenceContents();    // bytes, after checking evidence_hash
 $decision->verifyEvidence();      // bool
+$decision->evidenceFilename();    // the stored name without the hash prefix
+$decision->evidenceMimeType();    // the disk's detected type (contents first, then the extension)
 ```
 
 The path is `{evidence.path}/{decision id}/{first 12 hex of the SHA-256}-{sanitised filename}`;
@@ -255,6 +257,11 @@ the disk name is stored with it, so changing `evidence.disk` later still finds o
 once: the file is put first, then a conditional update (`whereNull('evidence_path')`) claims the
 columns; a loser gets `EvidenceAlreadyStored` and its file stays (never deleted). Missing,
 changed or never stored → `EvidenceFileUnavailable`.
+
+Downloads (public page and Filament, `Support\EvidenceDownload`, 0.1.2): `attachment` with the
+stored name and an ASCII fallback, `X-Content-Type-Options: nosniff`, and the detected type only
+when it is on an allowlist of inert types (PDF, PNG, JPEG, GIF, WebP, plain text, CSV, ZIP, Office
+and OpenDocument); anything else, HTML and SVG included, is `application/octet-stream`.
 
 Quotes uses it for the PDF of the accepted version (rendered by quotes, after the decision is
 committed, so the PDF can show the decision); contracts will store the signed PDF the same way.

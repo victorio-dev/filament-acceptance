@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\Response;
 use Victorio\Acceptance\Data\DecisionInput;
 use Victorio\Acceptance\Enums\DecisionKind;
@@ -23,6 +22,7 @@ use Victorio\Acceptance\Exceptions\VersionSuperseded;
 use Victorio\Acceptance\Facades\Decisions;
 use Victorio\Acceptance\Models\Decision;
 use Victorio\Acceptance\Models\SealedVersion;
+use Victorio\Acceptance\Support\EvidenceDownload;
 use Victorio\PublicLinks\Contracts\BrandingResolver;
 use Victorio\PublicLinks\Contracts\HandlesPublicLinkActions;
 use Victorio\PublicLinks\Contracts\PublicLinkHandler;
@@ -343,13 +343,7 @@ abstract class DecisionLinkHandler implements HandlesPublicLinkActions, PublicLi
             abort(404);
         }
 
-        // The stored name without the hash prefix the package added.
-        $filename = Str::after(basename($decision->evidence_path), '-');
-
-        return response($contents, 200, [
-            'Content-Type' => 'application/octet-stream',
-            'Content-Disposition' => HeaderUtils::makeDisposition(HeaderUtils::DISPOSITION_ATTACHMENT, $filename, Str::ascii($filename)),
-        ]);
+        return response($contents, 200, EvidenceDownload::headers($decision));
     }
 
     /**

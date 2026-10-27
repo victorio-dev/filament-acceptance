@@ -544,8 +544,28 @@ describe('after the decision', function (): void {
         $download = submit($path, 'evidence', [])->assertOk();
 
         expect($download->getContent())->toBe('%PDF-1.7 accepted')
-            ->and((string) $download->headers->get('Content-Disposition'))->toContain('Q-2026-0042.pdf');
+            ->and($download->headers->get('Content-Type'))->toBe('application/pdf')
+            ->and($download->headers->get('Content-Disposition'))->toBe('attachment; filename=Q-2026-0042.pdf')
+            ->and($download->headers->get('X-Content-Type-Options'))->toBe('nosniff');
     });
+
+    it('serves a file a browser could run as a plain download', function (string $contents, string $filename): void {
+        Storage::fake('local');
+        ['path' => $path] = decisionLink();
+        submit($path, 'accept', acceptForm());
+        Decision::query()->sole()->storeEvidence($contents, $filename);
+
+        $download = submit($path, 'evidence', [])->assertOk();
+
+        expect($download->getContent())->toBe($contents)
+            ->and($download->headers->get('Content-Type'))->toBe('application/octet-stream')
+            ->and((string) $download->headers->get('Content-Disposition'))->toStartWith('attachment; ')
+            ->and($download->headers->get('X-Content-Type-Options'))->toBe('nosniff');
+    })->with([
+        'HTML' => ['<!DOCTYPE html><html><body><script>alert(1)</script></body></html>', 'page.html'],
+        'HTML named as a PDF' => ['<!DOCTYPE html><html><body><script>alert(1)</script></body></html>', 'quote.pdf'],
+        'SVG' => ['<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>', 'logo.svg'],
+    ]);
 
     it('refuses to serve a changed or missing evidence file', function (): void {
         Storage::fake('local');
